@@ -72,7 +72,7 @@ int main(){
         // Update process list every 2 seconds before imgui frame starts
         Uint32 current_time = SDL_GetTicks(); // Get time in milliseconds
         if (current_time - last_update_time >= 2000) {
-            // FetchProcesses();
+            FetchProcesses();
             // GetCpuUsage();
             last_update_time = current_time;
         }

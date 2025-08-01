@@ -113,18 +113,20 @@ void ShowDockSpace(bool& p_open){
         float bottom_height = region.y - top_height;
         float left_width = region.x * left_width_ratio;
         float right_width = region.x - left_width;
-        // --- Top child window ---
+        // Top child window 
         ImGui::BeginChild("ProcTop", ImVec2(region.x, top_height), true);
         ImGui::Text("Top (e.g. summary/stats)");
-        ImGui::EndChild();
-        // --- Bottom container ---
+        ReadMemInfo();
+        ShowProcesses();
+         ImGui::EndChild();
+        // Bottom container 
         ImGui::BeginChild("ProcBottom", ImVec2(region.x, bottom_height), false);
-        // --- Left pane ---
+        // Left pane 
         ImGui::BeginChild("ProcBottomLeft", ImVec2(left_width, bottom_height), true);
         ImGui::Text("Left (e.g. process list)");
         ImGui::EndChild();
         ImGui::SameLine();
-        // --- Right pane ---
+        // Right pane 
         ImGui::BeginChild("ProcBottomRight", ImVec2(right_width, bottom_height), true);
         ImGui::Text("Right (e.g. details/memory info)");
         ImGui::EndChild();
