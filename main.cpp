@@ -12,8 +12,10 @@
 
 int main(){
     std::cout << "[INFO] Running...\n";
-    // std::thread cpu_worker(GetCpuUsage);
-    // cpu_worker.detach();
+    std::thread cpu_worker(GetCpuUsage);
+    cpu_worker.detach();
+    std::thread net_worker(GetNetworkUsage, "wlp2s0");
+    net_worker.detach();
     // std::thread show_thread(ShowCpuUsage);
 
     if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0){
@@ -56,11 +58,11 @@ int main(){
         while(SDL_PollEvent(&event)){
             ImGui_ImplSDL2_ProcessEvent(&event);
             if(event.type == SDL_QUIT){
-                // is_finished = true;
+                is_finished = true;
                 done = true;
             }
             if(event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(Window)){
-                // is_finished = true;
+                is_finished = true;
                 done = true;
             }
         }
@@ -94,9 +96,9 @@ int main(){
         SDL_RenderPresent(Renderer);
     }
 
-    // join threads
+    // join threads (kinda slows down program exit)
     // is_finished = true;
-    // cpu_fetch_thread.join();
+    // cpu_worker.join();
     // show_thread.join();
 
     // Cleanup
@@ -106,6 +108,6 @@ int main(){
     SDL_DestroyRenderer(Renderer);
     SDL_DestroyWindow(Window);
     SDL_Quit();
-
+    
     return 0;
 }

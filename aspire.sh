@@ -3,15 +3,15 @@
 
 build(){
     echo "[INFO] Starting build..."
-    echo "[CMD] g++ main.cpp imgui/* src/*.cpp -o build/wtop $(sdl2-config --cflags --libs) -Iinclude/imgui -Iinclude -lpthread"
-    g++ main.cpp imgui/* src/*.cpp -o build/wtop $(sdl2-config --cflags --libs) -Iinclude/imgui -Iinclude -lpthread
+    echo "[CMD] g++ main.cpp imgui/* src/*.cpp -o build/wtop $(sdl3-config --cflags --libs) -Iinclude/imgui -Iinclude -lpthread"
+    g++ main.cpp imgui/*.cpp src/*.cpp -o build/wtop $(sdl2-config --cflags --libs) -Iinclude/imgui -Iinclude -lpthread
     echo "[INFO] Build completed"
 }
 
 run(){
     echo "[INFO] Starting build..."
-    echo "[CMD] g++ main.cpp imgui/* src/*.cpp -o build/wtop $(sdl2-config --cflags --libs) -Iinclude/imgui -Iinclude -lpthread"
-    g++ main.cpp imgui/* src/*.cpp -o build/wtop $(sdl2-config --cflags --libs) -Iinclude/imgui -Iinclude -lpthread
+    echo "[CMD] g++ main.cpp imgui/* src/*.cpp -o build/wtop $(sdl3-config --cflags --libs) -Iinclude/imgui -Iinclude -lpthread"
+    g++ main.cpp imgui/*.cpp src/*.cpp -o build/wtop $(sdl2-config --cflags --libs) -Iinclude/imgui -Iinclude -lpthread
     echo "[INFO] Build completed"
     ./build/wtop
     rm -rf ./build/wtop

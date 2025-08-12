@@ -1,3 +1,4 @@
+
 #include "../punktop.h"
 
 void ShowDockSpace(bool& p_open){
@@ -117,14 +118,13 @@ void ShowDockSpace(bool& p_open){
         ImGui::BeginChild("ProcTop", ImVec2(region.x, top_height), true);
         ImGui::Text("Top (e.g. summary/stats)");
         ReadMemInfo();
-        ShowProcessesV();
+        ShowProcesses();
          ImGui::EndChild();
         // Bottom container 
         ImGui::BeginChild("ProcBottom", ImVec2(region.x, bottom_height), false);
         // Left pane 
         ImGui::BeginChild("ProcBottomLeft", ImVec2(left_width, bottom_height), true);
         ImGui::Text("Left (e.g. process list)");
-        ShowNetworkUsage();
         ImGui::EndChild();
         ImGui::SameLine();
         // Right pane 
@@ -136,7 +136,7 @@ void ShowDockSpace(bool& p_open){
         ImGui::EndChild(); // End of ProcBottom
     }
     
-    // ImGui::Text("This is elon Musk!");
+    ImGui::Text("This is elon Musk!");
     // ReadMemInfo();
     // FetchProcesses();
     // ShowProcesses();

@@ -5,42 +5,79 @@
 #include <cstring>
 #include "../punktop.h"
 #include <unistd.h>
-#include "imgui.h"
 
 namespace fs = std::filesystem;
 static const fs::path dir_path = "/proc/";
 static std::vector<Process> Procs;
 static std::mutex mtx;
 
-void ShowProcesses()
+void ShowProcessesV()
 {
-    ImGui::BeginChild("ProcScroll", ImVec2(0, 400), true); // Scrollable 
-    if (ImGui::BeginTable("ProcTable", 3, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
-        ImGui::TableSetupColumn("PID", ImGuiTableColumnFlags_WidthFixed, 100.0f);
+    ImGui::BeginChild("ProcScroll", ImVec2(0, 400), true, ImGuiWindowFlags_NoScrollbar);
+
+    static ImGuiTableFlags flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
+        ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_Resizable |
+        ImGuiTableFlags_Sortable | ImGuiTableFlags_ScrollY;
+
+    if (ImGui::BeginTable("ProcTable", 7, flags))
+    {
+        ImGui::TableSetupScrollFreeze(0, 1); // Freeze top row (header)
+        ImGui::TableSetupColumn("PID", ImGuiTableColumnFlags_WidthFixed, 60.0f);
+        ImGui::TableSetupColumn("User", ImGuiTableColumnFlags_WidthFixed, 80.0f);
         ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch);
-        ImGui::TableSetupColumn("Memory (MB)", ImGuiTableColumnFlags_WidthFixed, 120.0f);
+        ImGui::TableSetupColumn("%CPU", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_DefaultSort, 60.0f);
+        ImGui::TableSetupColumn("Mem (MB)", ImGuiTableColumnFlags_WidthFixed, 80.0f);
+        ImGui::TableSetupColumn("Threads", ImGuiTableColumnFlags_WidthFixed, 60.0f);
+        ImGui::TableSetupColumn("Command", ImGuiTableColumnFlags_WidthStretch);
         ImGui::TableHeadersRow();
 
-        for(const Process proc : Procs)
+        ImGuiListClipper clipper;
+        clipper.Begin(Procs.size());
+        while (clipper.Step())
         {
-            ImGui::TableNextRow();
-            ImGui::TableNextColumn(); ImGui::Text("%s", proc.Pid.c_str());
-            ImGui::TableNextColumn(); ImGui::Text("%s", proc.Name.empty() ?  "{Unknown}" : proc.Name.c_str());
-            ImGui::TableNextColumn();
-
-            if (proc.MemUsage >= 0)
+            for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
             {
+                const Process& proc = Procs[i];
+                ImGui::TableNextRow();
+
+                // PID
+                ImGui::TableNextColumn();
+                ImGui::Text("%s", proc.Pid.c_str());
+
+                // User
+                ImGui::TableNextColumn();
+                ImGui::Text("%s", proc.User.c_str());
+
+                // Name
+                ImGui::TableNextColumn();
+                ImGui::TextUnformatted(proc.Name.empty() ? "{Unknown}" : proc.Name.c_str());
+
+                // CPU
+                ImGui::TableNextColumn();
+                if (proc.CpuUsage > 50.0f)
+                    ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), "%.1f", proc.CpuUsage);
+                else if (proc.CpuUsage > 20.0f)
+                    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "%.1f", proc.CpuUsage);
+                else
+                    ImGui::TextColored(ImVec4(0.3f, 1.0f, 0.3f, 1.0f), "%.1f", proc.CpuUsage);
+
+                // Memory
+                ImGui::TableNextColumn();
                 float memMB = proc.MemUsage / 1024.0f;
                 if (memMB > 200.0f)
-                    ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), "%.2f MB", memMB);
-                else if(memMB > 100.0f)
-                    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "%.2f MB", memMB); 
+                    ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), "%.1f", memMB);
+                else if (memMB > 100.0f)
+                    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "%.1f", memMB);
                 else
-                    ImGui::TextColored(ImVec4(0.3f, 1.0f, 0.3f, 1.0f), "%.2f MB", memMB); 
-            }
-            else
-            {
-                ImGui::Text("0.0B");
+                    ImGui::TextColored(ImVec4(0.3f, 1.0f, 0.3f, 1.0f), "%.1f", memMB);
+
+                // Threads
+                ImGui::TableNextColumn();
+                ImGui::Text("%d", proc.ThreadCount);
+
+                // Command
+                ImGui::TableNextColumn();
+                ImGui::TextUnformatted(proc.Command.c_str());
             }
         }
         ImGui::EndTable();
@@ -58,18 +95,22 @@ void FetchProcesses()
             {
                 if (fs::is_directory(entry.status()))
                 {
-                    std::string entrypid = entry.path().filename().string();
+                    std::string entry_pid = entry.path().filename().string();
                     const char* entryp_path = entry.path().c_str();
 
-                    if(IsNumeric(entrypid))
+                    if(IsNumeric(entry_pid))
                     {
                         char* name = GetProcName(entryp_path);
                         int memory = GetMemoryUsage(entryp_path);
 
                         Process proc;
-                        proc.Pid = entrypid;
+                        proc.Pid = entry_pid;
                         proc.Name = name ? name : "Unknown";
                         proc.MemUsage = memory;
+                        proc.User = GetProcUser(entryp_path);
+                        proc.Command = GetProcCommand(entryp_path);
+                        proc.CpuUsage = GetProcCpuUsage(entry_pid);
+                        proc.ThreadCount = GetProcThreadCount(entryp_path);
 
                         Procs.push_back(proc);
                         if(name)
@@ -114,9 +155,90 @@ char* GetProcName(const char* path) {
             name[strcspn(name, "\n")] = '\0'; // Trim newline
         }
     }
-
     fclose(pf);
     return name;
+}
+
+std::string GetProcCommand(const char* path) {
+    char cmd_file[64];
+    snprintf(cmd_file, sizeof(cmd_file), "%s/cmdline", path);
+    FILE* pf = fopen(cmd_file, "r");
+    if (!pf) return "{Unknown}";
+    std::string cmd;
+    char ch;
+    while ((ch = fgetc(pf)) != EOF) {
+        cmd += (ch == '\0') ? ' ' : ch;
+    }
+    fclose(pf);
+    return cmd.empty() ? "{Unknown}" : cmd;
+}
+
+std::string GetProcUser(const char* path)
+{
+    struct stat info;
+    if(stat(path, &info) != 0)
+        return "[WARN] Unknown";
+    struct passwd* pw = getpwuid(info.st_uid);
+    return pw ? pw->pw_name : "Unknown";
+}
+
+int GetProcThreadCount(const char* path) {
+    char status_file[64];
+    snprintf(status_file, sizeof(status_file), "%s/status", path);
+    FILE* pf = fopen(status_file, "r");
+    if (!pf) return -1;
+    char line[128];
+    int threads = -1;
+    while (fgets(line, sizeof(line), pf)) {
+        if (strncmp(line, "Threads:", 8) == 0) {
+            sscanf(line + 8, "%d", &threads);
+            break;
+        }
+    }
+    fclose(pf);
+    return threads;
+}
+
+float GetProcCpuUsage(const std::string& pid) {
+    char stat_file[64];
+    snprintf(stat_file, sizeof(stat_file), "/proc/%s/stat", pid.c_str());
+    FILE* pf = fopen(stat_file, "r");
+    if (!pf) return 0.0f;
+    long utime, stime, starttime;
+    long rss;
+    long clk_tck = sysconf(_SC_CLK_TCK);
+
+    // Extract needed fields from /proc/[pid]/stat file 
+    // Format: pid (comm) state ppid ... utime stime ... starttime ...
+    char comm[256], state;
+    int ppid, pgrp, session, tty_nr, tpgid;
+    unsigned flags;
+    unsigned long minflt, cminflt, majflt, cmajflt;
+    unsigned long cutime, cstime, priority, nice, num_threads, itrealvalue;
+    unsigned long long start_time_ticks;
+    unsigned long vsize;
+    long rss_val;
+    fscanf(pf, "%*d %*s %*c "
+               "%*d %*d %*d %*d %*d "
+               "%*u %*u %*u %*u %lu %lu "
+               "%*d %*d %*d %*d %*d %*d "
+               "%llu",
+               &utime, &stime, &start_time_ticks);
+    fclose(pf);
+    long total_time = utime + stime;
+    
+    // System uptime
+    float uptime_secs = 0;
+    pf = fopen("/proc/uptime", "r");
+    if (!pf) return 0.0f;
+    fscanf(pf, "%f", &uptime_secs);
+    fclose(pf);
+
+    // Seconds the process has been running
+    float seconds = uptime_secs - (start_time_ticks / (float)clk_tck);
+    if (seconds <= 0) return 0.0f;
+    float cpu_usage = 100.0f * ((total_time / (float)clk_tck) / seconds);
+    return cpu_usage;
 }
 
 void ReadMemInfo() {
@@ -137,7 +259,8 @@ void ReadMemInfo() {
         }
     }
     // ImGui::Text("[INFO] Total Memory by kb: %.2f", memory);
-    ImGui::Text("[INFO] Total Memory: %.2fMB", memMB);
+    // ImGui::Text("[INFO] Total Memory: %.2fMB", memMB);
+    ImGui::TextColored(ImVec4(0.6f, 0.8f, 1.0f, 1.0f), "[INFO] Total Memory: %.2fMB", memMB);
     fclose(pf);
 }
 
@@ -156,7 +279,7 @@ int GetMemoryUsage(const char* path) {
 
     while (fgets(line, sizeof(line), pf)) {
         if (strncmp(line, "VmRSS:", 6) == 0) {
-            sscanf(line + 6, "%d", &memory);  // Skip past "VmRSS:"
+            sscanf(line + 6, "%d", &memory);  // Skip "VmRSS:"
             // printf("[INFO] %s", line); 
             break;
         }
@@ -164,3 +287,42 @@ int GetMemoryUsage(const char* path) {
     fclose(pf);
     return memory;
 }
+
+
+// void ShowProcesses()
+// {
+//     ImGui::BeginChild("ProcScroll", ImVec2(0, 400), true); // Scrollable 
+//     if (ImGui::BeginTable("ProcTable", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
+//         ImGui::TableSetupColumn("Pid", ImGuiTableColumnFlags_WidthFixed, 100.0f);
+//         ImGui::TableSetupColumn("User", ImGuiTableColumnFlags_WidthFixed, 150.0f);
+//         ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch);
+//         ImGui::TableSetupColumn("Memory (MB)", ImGuiTableColumnFlags_WidthFixed, 120.0f);
+//         ImGui::TableHeadersRow();
+
+//         for(const Process proc : Procs)
+//             {
+//                 ImGui::TableNextRow();
+//                 ImGui::TableNextColumn(); ImGui::Text("%s", proc.Pid.c_str());
+//                 ImGui::TableNextColumn(); ImGui::Text("%s", proc.User.c_str());
+//                 ImGui::TableNextColumn(); ImGui::Text("%s", proc.Name.empty() ?  "{Unknown}" : proc.Name.c_str());
+//                 ImGui::TableNextColumn();
+
+//                 if (proc.MemUsage >= 0)
+//                     {
+//                         float memMB = proc.MemUsage / 1024.0f;
+//                         if (memMB > 200.0f)
+//                             ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), "%.2f MB", memMB);
+//                         else if(memMB > 100.0f)
+//                             ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "%.2f MB", memMB); 
+//                         else
+//                             ImGui::TextColored(ImVec4(0.3f, 1.0f, 0.3f, 1.0f), "%.2f MB", memMB); 
+//                     }
+//                 else
+//                     {
+//                         ImGui::Text("0.0B");
+//                     }
+//             }
+//         ImGui::EndTable();
+//     }
+//     ImGui::EndChild();
+// }
