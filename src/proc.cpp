@@ -10,43 +10,72 @@ namespace fs = std::filesystem;
 static const fs::path dir_path = "/proc/";
 static std::vector<Process> Procs;
 static std::mutex mtx;
+static std::string selected_pid;
 
 void ShowProcessesV()
 {
-    ImGui::BeginChild("ProcScroll", ImVec2(0, 400), true, ImGuiWindowFlags_NoScrollbar);
+    ImGui::BeginChild("ProcScroll", ImVec2(0, 400), true,
+                      ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
-    static ImGuiTableFlags flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
-        ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_Resizable |
-        ImGuiTableFlags_Sortable | ImGuiTableFlags_ScrollY;
+    static ImGuiTableFlags flags = ImGuiTableFlags_BordersInnerV |
+        ImGuiTableFlags_RowBg |
+        ImGuiTableFlags_SizingStretchProp |
+        ImGuiTableFlags_Resizable |
+        ImGuiTableFlags_Sortable |
+        ImGuiTableFlags_ScrollY;
 
     if (ImGui::BeginTable("ProcTable", 7, flags))
     {
-        ImGui::TableSetupScrollFreeze(0, 1); // Freeze top row (header)
+        ImGui::TableSetupScrollFreeze(0, 1); // Freeze top row
         ImGui::TableSetupColumn("PID", ImGuiTableColumnFlags_WidthFixed, 60.0f);
         ImGui::TableSetupColumn("User", ImGuiTableColumnFlags_WidthFixed, 80.0f);
-        ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch);
-        ImGui::TableSetupColumn("%CPU", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_DefaultSort, 60.0f);
+        ImGui::TableSetupColumn("Name");
+        ImGui::TableSetupColumn("%CPU", ImGuiTableColumnFlags_WidthFixed, 60.0f);
         ImGui::TableSetupColumn("Mem (MB)", ImGuiTableColumnFlags_WidthFixed, 80.0f);
         ImGui::TableSetupColumn("Threads", ImGuiTableColumnFlags_WidthFixed, 60.0f);
-        ImGui::TableSetupColumn("Command", ImGuiTableColumnFlags_WidthStretch);
+        ImGui::TableSetupColumn("Command");
         ImGui::TableHeadersRow();
 
         ImGuiListClipper clipper;
-        clipper.Begin(Procs.size());
+        clipper.Begin((int)Procs.size());
         while (clipper.Step())
         {
             for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
             {
                 const Process& proc = Procs[i];
+                bool is_selected = (proc.Pid == selected_pid);
+
                 ImGui::TableNextRow();
 
-                // PID
+                // Clickable row start
+                ImGui::PushID(i);
                 ImGui::TableNextColumn();
-                ImGui::Text("%s", proc.Pid.c_str());
+
+                // Detect row click
+                if (ImGui::Selectable(proc.Pid.c_str(), is_selected, ImGuiSelectableFlags_SpanAllColumns))
+                {
+                    selected_pid = proc.Pid;
+                }
+
+                // Context menu
+                if (ImGui::BeginPopupContextItem())
+                {
+                    if (ImGui::MenuItem("Kill Process"))
+                    {
+                        // TODO: call kill()
+                        std::cout << "Killing PID: " << proc.Pid << "\n";
+                    }
+                    if (ImGui::MenuItem("Pin Process"))
+                    {
+                        // TODO: add to pinned list
+                        std::cout << "Pinning PID: " << proc.Pid << "\n";
+                    }
+                    ImGui::EndPopup();
+                }
 
                 // User
                 ImGui::TableNextColumn();
-                ImGui::Text("%s", proc.User.c_str());
+                ImGui::TextUnformatted(proc.User.c_str());
 
                 // Name
                 ImGui::TableNextColumn();
@@ -54,22 +83,18 @@ void ShowProcessesV()
 
                 // CPU
                 ImGui::TableNextColumn();
-                if (proc.CpuUsage > 50.0f)
-                    ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), "%.1f", proc.CpuUsage);
-                else if (proc.CpuUsage > 20.0f)
-                    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "%.1f", proc.CpuUsage);
-                else
-                    ImGui::TextColored(ImVec4(0.3f, 1.0f, 0.3f, 1.0f), "%.1f", proc.CpuUsage);
+                ImVec4 cpu_color = (proc.CpuUsage > 50.0f) ? ImVec4(1.0f, 0.3f, 0.3f, 1.0f) :
+                                     (proc.CpuUsage > 20.0f) ? ImVec4(1.0f, 1.0f, 0.0f, 1.0f) :
+                                                                ImVec4(0.3f, 1.0f, 0.3f, 1.0f);
+                ImGui::TextColored(cpu_color, "%.1f", proc.CpuUsage);
 
                 // Memory
                 ImGui::TableNextColumn();
                 float memMB = proc.MemUsage / 1024.0f;
-                if (memMB > 200.0f)
-                    ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), "%.1f", memMB);
-                else if (memMB > 100.0f)
-                    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "%.1f", memMB);
-                else
-                    ImGui::TextColored(ImVec4(0.3f, 1.0f, 0.3f, 1.0f), "%.1f", memMB);
+                ImVec4 mem_color = (memMB > 200.0f) ? ImVec4(1.0f, 0.3f, 0.3f, 1.0f) :
+                                     (memMB > 100.0f) ? ImVec4(1.0f, 1.0f, 0.0f, 1.0f) :
+                                                        ImVec4(0.3f, 1.0f, 0.3f, 1.0f);
+                ImGui::TextColored(mem_color, "%.1f", memMB);
 
                 // Threads
                 ImGui::TableNextColumn();
@@ -78,6 +103,8 @@ void ShowProcessesV()
                 // Command
                 ImGui::TableNextColumn();
                 ImGui::TextUnformatted(proc.Command.c_str());
+
+                ImGui::PopID();
             }
         }
         ImGui::EndTable();
