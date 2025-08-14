@@ -62,3 +62,4 @@ void ShowNetworkUsage();
 void GetCpuUsage();
 void ShowCpuUsage();
 void ShowDiskWindow();
+void KillProc(std::string proc_pid);

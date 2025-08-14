@@ -5,6 +5,7 @@
 #include <cstring>
 #include "../punktop.h"
 #include <unistd.h>
+#include <signal.h>
 
 namespace fs = std::filesystem;
 static const fs::path dir_path = "/proc/";
@@ -62,8 +63,9 @@ void ShowProcessesV()
                 {
                     if (ImGui::MenuItem("Kill Process"))
                     {
-                        // TODO: call kill()
+                        // Kill Proc
                         std::cout << "Killing PID: " << proc.Pid << "\n";
+                        KillProc(proc.Pid);
                     }
                     if (ImGui::MenuItem("Pin Process"))
                     {
@@ -315,6 +317,22 @@ int GetMemoryUsage(const char* path) {
     return memory;
 }
 
+void KillProc(std::string proc_pid)
+{
+    pid_t pid;
+    try {
+        pid_t pid = std::stoi(proc_pid);
+        if(kill(pid, SIGKILL) != 0){
+            std::cout << "[ERROR] Failed Killing Task\n";
+        }
+    }
+    catch (const std::invalid_argument &e) {
+        std::cerr << "Invalid number\n";
+    }
+    catch (const std::out_of_range &e) {
+        std::cerr << "Number out of range\n";
+    }
+}
 
 // void ShowProcesses()
 // {

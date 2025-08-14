@@ -123,13 +123,13 @@ void ShowDockSpace(bool& p_open){
         ImGui::BeginChild("ProcBottom", ImVec2(region.x, bottom_height), false);
         // Left pane 
         ImGui::BeginChild("ProcBottomLeft", ImVec2(left_width, bottom_height), true);
-        ImGui::Text("Left (e.g. process list)");
+        ImGui::Text("Left (Network Window)");
         ShowNetworkUsage();
         ImGui::EndChild();
         ImGui::SameLine();
         // Right pane 
         ImGui::BeginChild("ProcBottomRight", ImVec2(right_width, bottom_height), true);
-        ImGui::Text("Right (e.g. details/memory info)");
+        ImGui::Text("Right (CPU Window)");
         if(!is_finished)
             ShowCpuUsage();
         ImGui::EndChild();
