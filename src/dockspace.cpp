@@ -115,8 +115,21 @@ void ShowDockSpace(bool& p_open){
         float right_width = region.x - left_width;
         // Top child window 
         ImGui::BeginChild("ProcTop", ImVec2(region.x, top_height), true);
-        ImGui::Text("Top (e.g. summary/stats)");
-        ReadMemInfo();
+        ImGui::Text("Top (Process List)");
+        ReadMemInfo(); ImGui::SameLine();
+        const char* sortItems[] = {
+            "no_sort",
+            "name_sort", "name_desc",
+            "pid_sort", "pid_desc",
+            "mem_sort",
+            "mem_desc",
+            "cpu_sort", "cpu_desc",
+            "thread_desc",
+        };
+        static int currentItem = 1; // Default is "no_sort"
+        if (ImGui::Combo("Sort by", &currentItem, sortItems, IM_ARRAYSIZE(sortItems))) {
+            sortMode = static_cast<SortMode>(currentItem); // update global
+        }
         ShowProcessesV();
          ImGui::EndChild();
         // Bottom container 

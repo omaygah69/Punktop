@@ -6,12 +6,14 @@
 #include "../punktop.h"
 #include <unistd.h>
 #include <signal.h>
+#include <algorithm>
 
 namespace fs = std::filesystem;
 static const fs::path dir_path = "/proc/";
 static std::vector<Process> Procs;
 static std::mutex mtx;
 static std::string selected_pid;
+SortMode sortMode = no_sort;
 
 void ShowProcessesV()
 {
@@ -147,6 +149,8 @@ void FetchProcesses()
                     }
                 }
             }
+            if(sortMode != no_sort)
+                SortProcesses(sortMode);
         }
         else
         {
@@ -160,6 +164,35 @@ void FetchProcesses()
     catch (const std::exception& e)
     {
         std::cerr << "[ERROR] " << e.what() << "\n";
+    }
+}
+
+// TODO
+void SortProcesses(SortMode mode)
+{
+    switch(mode){
+    case mem_desc:
+        std::sort(Procs.begin(), Procs.end(), [](const Process& a, Process& b){
+            return a.MemUsage > b.MemUsage;
+        });
+        break;
+    case name_sort:
+        std::sort(Procs.begin(), Procs.end(),[](const Process& a, Process& b){
+            return a.Name < b.Name;
+        });
+            break;
+    case pid_sort:
+        std::sort(Procs.begin(), Procs.end(),[](const Process& a, Process& b){
+            return std::stoi(a.Pid) > std::stoi(b.Pid);
+        });
+        break;
+    case cpu_sort:
+        std::sort(Procs.begin(), Procs.end(),[](const Process& a, Process& b){
+            return a.MemUsage > b.MemUsage;
+        });
+        break;
+    default:
+        break;
     }
 }
 
@@ -228,13 +261,12 @@ int GetProcThreadCount(const char* path) {
     return threads;
 }
 
-float GetProcCpuUsage(const std::string& pid) {
+float GetProcCpuUsage(const std::string& pid){
     char stat_file[64];
     snprintf(stat_file, sizeof(stat_file), "/proc/%s/stat", pid.c_str());
     FILE* pf = fopen(stat_file, "r");
     if (!pf) return 0.0f;
-    long utime, stime, starttime;
-    long rss;
+    long utime, stime;
     long clk_tck = sysconf(_SC_CLK_TCK);
 
     // Extract needed fields from /proc/[pid]/stat file 
@@ -242,7 +274,6 @@ float GetProcCpuUsage(const std::string& pid) {
     char comm[256], state;
     int ppid, pgrp, session, tty_nr, tpgid;
     unsigned flags;
-    unsigned long minflt, cminflt, majflt, cmajflt;
     unsigned long cutime, cstime, priority, nice, num_threads, itrealvalue;
     unsigned long long start_time_ticks;
     unsigned long vsize;
@@ -333,41 +364,3 @@ void KillProc(std::string proc_pid)
         std::cerr << "Number out of range\n";
     }
 }
-
-// void ShowProcesses()
-// {
-//     ImGui::BeginChild("ProcScroll", ImVec2(0, 400), true); // Scrollable 
-//     if (ImGui::BeginTable("ProcTable", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
-//         ImGui::TableSetupColumn("Pid", ImGuiTableColumnFlags_WidthFixed, 100.0f);
-//         ImGui::TableSetupColumn("User", ImGuiTableColumnFlags_WidthFixed, 150.0f);
-//         ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch);
-//         ImGui::TableSetupColumn("Memory (MB)", ImGuiTableColumnFlags_WidthFixed, 120.0f);
-//         ImGui::TableHeadersRow();
-
-//         for(const Process proc : Procs)
-//             {
-//                 ImGui::TableNextRow();
-//                 ImGui::TableNextColumn(); ImGui::Text("%s", proc.Pid.c_str());
-//                 ImGui::TableNextColumn(); ImGui::Text("%s", proc.User.c_str());
-//                 ImGui::TableNextColumn(); ImGui::Text("%s", proc.Name.empty() ?  "{Unknown}" : proc.Name.c_str());
-//                 ImGui::TableNextColumn();
-
-//                 if (proc.MemUsage >= 0)
-//                     {
-//                         float memMB = proc.MemUsage / 1024.0f;
-//                         if (memMB > 200.0f)
-//                             ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), "%.2f MB", memMB);
-//                         else if(memMB > 100.0f)
-//                             ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "%.2f MB", memMB); 
-//                         else
-//                             ImGui::TextColored(ImVec4(0.3f, 1.0f, 0.3f, 1.0f), "%.2f MB", memMB); 
-//                     }
-//                 else
-//                     {
-//                         ImGui::Text("0.0B");
-//                     }
-//             }
-//         ImGui::EndTable();
-//     }
-//     ImGui::EndChild();
-// }
