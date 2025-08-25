@@ -131,12 +131,11 @@ void FetchProcesses()
 
                     if(IsNumeric(entry_pid))
                     {
-                        char* name = GetProcName(entryp_path);
                         int memory = GetMemoryUsage(entryp_path);
 
                         Process proc;
                         proc.Pid = entry_pid;
-                        proc.Name = name ? name : "Unknown";
+                        proc.Name = GetProcName(entryp_path);
                         proc.MemUsage = memory;
                         proc.User = GetProcUser(entryp_path);
                         proc.Command = GetProcCommand(entryp_path);
@@ -144,8 +143,8 @@ void FetchProcesses()
                         proc.ThreadCount = GetProcThreadCount(entryp_path);
 
                         Procs.push_back(proc);
-                        if(name)
-                            free(name);
+                        // if(name)
+                        //     free(name);
                     }
                 }
             }
@@ -171,26 +170,67 @@ void FetchProcesses()
 void SortProcesses(SortMode mode)
 {
     switch(mode){
-    case mem_desc:
-        std::sort(Procs.begin(), Procs.end(), [](const Process& a, Process& b){
-            return a.MemUsage > b.MemUsage;
-        });
-        break;
     case name_sort:
         std::sort(Procs.begin(), Procs.end(),[](const Process& a, Process& b){
             return a.Name < b.Name;
         });
             break;
+            
+    case name_desc:
+        std::sort(Procs.begin(), Procs.end(),[](const Process& a, Process& b){
+            return a.Name > b.Name;
+        });
+        break;
+
+        
     case pid_sort:
         std::sort(Procs.begin(), Procs.end(),[](const Process& a, Process& b){
             return std::stoi(a.Pid) > std::stoi(b.Pid);
         });
         break;
-    case cpu_sort:
+
+    case pid_desc:
         std::sort(Procs.begin(), Procs.end(),[](const Process& a, Process& b){
+            return std::stoi(a.Pid) < std::stoi(b.Pid);
+        });
+        break;
+                        
+    case mem_sort:
+        std::sort(Procs.begin(), Procs.end(), [](const Process& a, Process& b){
             return a.MemUsage > b.MemUsage;
         });
         break;
+        
+    case mem_desc:
+        std::sort(Procs.begin(), Procs.end(), [](const Process& a, Process& b){
+            return a.MemUsage < b.MemUsage;
+        });
+        break;
+
+    case cpu_sort:
+        std::sort(Procs.begin(), Procs.end(),[](const Process& a, Process& b){
+            return a.CpuUsage > b.CpuUsage;
+        });
+        break;
+
+    case cpu_desc:
+        std::sort(Procs.begin(), Procs.end(),[](const Process& a, Process& b){
+            return a.CpuUsage < b.CpuUsage;
+        });
+        break;
+
+    case thread_sort:
+        std::sort(Procs.begin(), Procs.end(),[](const Process& a, Process& b){
+            return a.ThreadCount > b.ThreadCount;
+        });
+        break;
+        
+    case thread_desc:
+        std::sort(Procs.begin(), Procs.end(),[](const Process& a, Process& b){
+            return a.ThreadCount < b.ThreadCount;
+        });
+        break;
+        
     default:
         break;
     }
@@ -202,19 +242,21 @@ bool IsNumeric(std::string dir_name) {
     return *buffer == 0;
 }
 
-char* GetProcName(const char* path) {
+std::string GetProcName(const char* path) {
     char status_file[64];
     snprintf(status_file, sizeof(status_file), "%s/status", path);
     FILE* pf = fopen(status_file, "r");
-    if (pf == NULL) {
-        return NULL;
-    }
-    char buffer[64];
-    char* name = NULL;
-    if (fgets(buffer, sizeof(buffer), pf)) {
-        if (strncmp(buffer, "Name:", 5) == 0) {
-            name = strdup(buffer + 6); // Copy string after "Name: "
-            name[strcspn(name, "\n")] = '\0'; // Trim newline
+    if (!pf) return "{Unknown}";
+    char line[128];
+    std::string name = "{Unknown}";
+    while (fgets(line, sizeof(line), pf)) {
+        if (strncmp(line, "Name:", 5) == 0) {
+            name = std::string(line + 6);
+            // trim leading spaces
+            name.erase(0, name.find_first_not_of(" \t"));
+            // trim trailing newline
+            name.erase(name.find_last_not_of("\n") + 1);
+            break;
         }
     }
     fclose(pf);

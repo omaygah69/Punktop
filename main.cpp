@@ -1,4 +1,6 @@
 #include "./include/imgui/imgui.h"
+#include "./include/implot/implot.h"
+#include "./include/implot/implot_internal.h"
 #include "./include/imgui/imgui_impl_sdl2.h"
 #include "./include/imgui/imgui_impl_sdlrenderer2.h"
 #include <SDL.h>
@@ -39,6 +41,7 @@ int main(){
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
+    ImPlot::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
@@ -105,6 +108,7 @@ int main(){
     ImGui_ImplSDLRenderer2_Shutdown();
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
+    ImPlot::DestroyContext();
     SDL_DestroyRenderer(Renderer);
     SDL_DestroyWindow(Window);
     SDL_Quit();

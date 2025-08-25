@@ -6,6 +6,7 @@
 static std::vector<float> cpu_usage_list;
 std::atomic<bool> is_finished{false};
 std::atomic<bool> fetch_finished = false;
+static void ReadCpuModel();
 
 void ParseCpuLine(const char* line, Core_t* ct)
 {
@@ -13,6 +14,7 @@ void ParseCpuLine(const char* line, Core_t* ct)
            "%*s %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu",
            &ct->user, &ct->nice, &ct->system, &ct->idle, &ct->iowait,
            &ct->irq, &ct->softirq, &ct->steal, &ct->guest, &ct->guest_nice);
+
 }
 
 static unsigned long long IdleTime(const Core_t* ct) {
@@ -80,8 +82,8 @@ void ShowCpuUsage()
         return;
 
     ImGui::BeginChild("CPUUsagePanel", ImVec2(0, 0), true, ImGuiWindowFlags_NoScrollbar);
-    ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "CPU Usage Overview");
-
+    // ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "CPU Usage Overview");
+    ReadCpuModel();
     // Total CPU
     {
         float total = cpu_usage_list[0];
@@ -139,4 +141,25 @@ void GetCpuUsage()
         cpu_usage_list = CalculateCpuUsage(prev, curr);
         fetch_finished.store(true, std::memory_order_release);
     }
+}
+
+static void ReadCpuModel(){
+    FILE *fp = fopen("/proc/cpuinfo", "r");
+    if (!fp) {
+        perror("fopen");
+        return;
+    }
+
+    char line[1024];
+    while (fgets(line, sizeof(line), fp)) {
+        if (strncmp(line, "model name", 10) == 0) {
+            char *colon = strchr(line, ':');
+            if (colon) {
+                // printf("CPU: %s", colon + 2); // skip ": "
+                ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "CPU: %s", colon + 2);
+            }
+            break; 
+        }
+    }
+    fclose(fp);
 }

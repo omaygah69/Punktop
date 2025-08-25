@@ -121,17 +121,25 @@ void ShowDockSpace(bool& p_open){
             "no_sort",
             "name_sort", "name_desc",
             "pid_sort", "pid_desc",
-            "mem_sort",
-            "mem_desc",
+            "mem_sort", "mem_desc",
             "cpu_sort", "cpu_desc",
-            "thread_desc",
+            "thread_sort", "thread_desc",
         };
         static int currentItem = 1; // Default is "no_sort"
-        if (ImGui::Combo("Sort by", &currentItem, sortItems, IM_ARRAYSIZE(sortItems))) {
-            sortMode = static_cast<SortMode>(currentItem); // update global
+        // Dropdown
+        ImGui::SetNextItemWidth(120.0f);
+        if (ImGui::Combo("##SortBy", &currentItem, sortItems, IM_ARRAYSIZE(sortItems))) {
+            sortMode = static_cast<SortMode>(currentItem);
         }
+        ImGui::SameLine();
+        ImGui::Text("Sort");
+        // Search Bar
+        static char searchBuffer[64] = "";
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(200.0f); 
+        ImGui::InputTextWithHint("##Search", "Search process...", searchBuffer, IM_ARRAYSIZE(searchBuffer));
         ShowProcessesV();
-         ImGui::EndChild();
+        ImGui::EndChild();
         // Bottom container 
         ImGui::BeginChild("ProcBottom", ImVec2(region.x, bottom_height), false);
         // Left pane 

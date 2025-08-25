@@ -40,6 +40,7 @@ enum SortMode
     mem_desc,
     cpu_sort,
     cpu_desc,
+    thread_sort,
     thread_desc,
 };
 
@@ -48,11 +49,17 @@ struct NetStat {
     unsigned long long tx_bytes = 0;
 };
 
-struct NetData {
-    NetStat stat;
+struct NetHistory {
     std::vector<float> rx_history;
     std::vector<float> tx_history;
+    NetStat last_stat{};
 };
+
+// struct NetData {
+//     NetStat stat;
+//     std::vector<float> rx_history;
+//     std::vector<float> tx_history;
+// };
 
 typedef struct {
     size_t user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice;
@@ -62,7 +69,7 @@ extern SortMode sortMode;
 Process* CreateProcess(unsigned int pid, char* name, float memusage);
 void ShowDockSpace(bool& p_open);
 bool IsNumeric(std::string dir_name);
-char* GetProcName(const char* path);
+std::string GetProcName(const char* path);
 int GetMemoryUsage(const char* path);
 std::string GetProcUser(const char* path);
 std::string GetProcCommand(const char* path);
