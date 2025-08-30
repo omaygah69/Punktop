@@ -16,6 +16,7 @@
 #define SLEEP_INTERVAL 1
 
 extern std::atomic<bool> is_finished;
+extern std::string search_query;
 // extern bool fetch_finished;
 // extern std::mutex mtx;
 

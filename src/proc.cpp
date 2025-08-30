@@ -7,13 +7,16 @@
 #include <unistd.h>
 #include <signal.h>
 #include <algorithm>
+#include <numeric>
 
 namespace fs = std::filesystem;
 static const fs::path dir_path = "/proc/";
 static std::vector<Process> Procs;
 static std::mutex mtx;
 static std::string selected_pid;
+static int current_match_index;
 SortMode sortMode = no_sort;
+std::string search_query;
 
 void ShowProcessesV()
 {
@@ -26,6 +29,26 @@ void ShowProcessesV()
         ImGuiTableFlags_Resizable |
         ImGuiTableFlags_Sortable |
         ImGuiTableFlags_ScrollY;
+
+    std::vector<int> filtered_indexes;
+    if(!search_query.empty())
+    {
+        for(int i = 0; i < (int)Procs.size(); i++){
+            const Process& proc = Procs[i];
+            if(proc.Name.find(search_query) != std::string::npos ||
+               proc.Pid.find(search_query) != std::string::npos ||
+               proc.Command.find(search_query) != std::string::npos)
+            {
+                filtered_indexes.push_back(i);
+            }
+        }
+    }
+    else
+    {
+        // No search active, show all
+        filtered_indexes.resize(Procs.size());
+        std::iota(filtered_indexes.begin(), filtered_indexes.end(), 0);
+    }
 
     if (ImGui::BeginTable("ProcTable", 7, flags))
     {
@@ -40,11 +63,12 @@ void ShowProcessesV()
         ImGui::TableHeadersRow();
 
         ImGuiListClipper clipper;
-        clipper.Begin((int)Procs.size());
+        clipper.Begin((int)filtered_indexes.size());
         while (clipper.Step())
         {
-            for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
+            for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; row++)
             {
+                int i = filtered_indexes[row];
                 const Process& proc = Procs[i];
                 bool is_selected = (proc.Pid == selected_pid);
 
@@ -54,12 +78,21 @@ void ShowProcessesV()
                 ImGui::PushID(i);
                 ImGui::TableNextColumn();
 
+                bool is_active_match = (!filtered_indexes.empty() &&
+                                        current_match_index >= 0 &&
+                                        row == current_match_index);
+
                 // Detect row click
                 if (ImGui::Selectable(proc.Pid.c_str(), is_selected, ImGuiSelectableFlags_SpanAllColumns))
                 {
                     selected_pid = proc.Pid;
                 }
 
+                if (is_active_match) {
+                    ImGui::SetItemDefaultFocus();
+                    ImGui::SetScrollHereY();
+                }
+                
                 // Context menu
                 if (ImGui::BeginPopupContextItem())
                 {

@@ -137,7 +137,9 @@ void ShowDockSpace(bool& p_open){
         static char searchBuffer[64] = "";
         ImGui::SameLine();
         ImGui::SetNextItemWidth(200.0f); 
-        ImGui::InputTextWithHint("##Search", "Search process...", searchBuffer, IM_ARRAYSIZE(searchBuffer));
+        if (ImGui::InputTextWithHint("##Search", "Search process...", searchBuffer, IM_ARRAYSIZE(searchBuffer))) {
+            search_query = searchBuffer;
+        }
         ShowProcessesV();
         ImGui::EndChild();
         // Bottom container 
