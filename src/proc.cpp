@@ -85,12 +85,15 @@ void ShowProcessesV()
                 // Detect row click
                 if (ImGui::Selectable(proc.Pid.c_str(), is_selected, ImGuiSelectableFlags_SpanAllColumns))
                 {
-                    selected_pid = proc.Pid;
+                    if(is_selected)
+                        selected_pid.clear();
+                    else
+                        selected_pid = proc.Pid;
                 }
 
                 if (is_active_match) {
                     ImGui::SetItemDefaultFocus();
-                    ImGui::SetScrollHereY();
+                    // ImGui::SetScrollHereY();
                 }
                 
                 // Context menu
