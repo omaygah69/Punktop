@@ -217,7 +217,6 @@ void SortProcesses(SortMode mode)
             return a.Name > b.Name;
         });
         break;
-
         
     case pid_sort:
         std::sort(Procs.begin(), Procs.end(),[](const Process& a, Process& b){

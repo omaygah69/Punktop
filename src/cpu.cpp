@@ -14,7 +14,6 @@ void ParseCpuLine(const char* line, Core_t* ct)
            "%*s %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu",
            &ct->user, &ct->nice, &ct->system, &ct->idle, &ct->iowait,
            &ct->irq, &ct->softirq, &ct->steal, &ct->guest, &ct->guest_nice);
-
 }
 
 static unsigned long long IdleTime(const Core_t* ct) {

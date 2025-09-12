@@ -75,11 +75,14 @@ void ShowDockSpace(bool& p_open){
         // Left side
         ImGui::BeginChild("LeftChild", ImVec2(region.x - child_width - 5, child_height), true);
         ImGui::Text("Network Window");
+        ShowDiskUsage();
         ImGui::EndChild();
         ImGui::SameLine();
         // Right side
         ImGui::BeginChild("RightChild", ImVec2(child_width, child_height), true);
-        // ShowDiskWindow();  
+        // ShowDiskWindow();
+        ShowMemoryUsage();
+        ShowDiskUsage();
         ImGui::EndChild();
         ImGui::End();
     }
@@ -98,6 +101,8 @@ void ShowDockSpace(bool& p_open){
         ImGui::BeginChild("CpuUsageChild", ImVec2(child_width, child_height), true, ImGuiChildFlags_Borders);
         // if(!is_finished)
         //     ShowCpuUsage();
+        static SystemInfo sysinfo = ReadSystemInfo();
+        ShowSystemInfo(sysinfo);
         ImGui::EndChild();
         ImGui::PopStyleColor();
         ImGui::End();

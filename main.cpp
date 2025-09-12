@@ -18,8 +18,12 @@ int main(){
     cpu_worker.detach();
     std::thread net_worker(GetNetworkUsage, "wlp2s0");
     net_worker.detach();
+    std::thread mem_worker(FetchMemoryUsage);
+    mem_worker.detach();
+    std::thread disk_worker(FetchDiskUsage);
+    disk_worker.detach();
     // std::thread show_thread(ShowCpuUsage);
-
+    
     if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0){
         printf("Error: %s\n", SDL_GetError());
         return -1;

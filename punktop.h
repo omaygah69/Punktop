@@ -56,6 +56,16 @@ struct NetHistory {
     NetStat last_stat{};
 };
 
+struct SystemInfo {
+    std::string hostname;
+    std::string kernel;
+    std::string uptime;
+    std::string cpu_model;
+    int cores = 0;
+    std::string gpu_model;
+    float ram_total_gb = 0.0f;
+};
+
 // struct NetData {
 //     NetStat stat;
 //     std::vector<float> rx_history;
@@ -87,3 +97,9 @@ void ShowCpuUsage();
 void ShowDiskWindow();
 void KillProc(std::string proc_pid);
 void SortProcesses(SortMode mode);
+void FetchMemoryUsage();
+void ShowMemoryUsage();
+void FetchDiskUsage();
+void ShowDiskUsage();
+SystemInfo ReadSystemInfo();
+void ShowSystemInfo(const SystemInfo& info);
