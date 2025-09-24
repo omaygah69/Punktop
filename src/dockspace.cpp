@@ -72,17 +72,21 @@ void ShowDockSpace(bool& p_open){
         float split_ratio   = 0.5f;
         float child_width   = region.x * split_ratio;
         float child_height  = region.y;
+        float panel_height = child_height * 0.5f;
         // Left side
-        ImGui::BeginChild("LeftChild", ImVec2(region.x - child_width - 5, child_height), true);
-        ImGui::Text("Network Window");
+        ImGui::BeginChild("LeftChild", ImVec2(region.x - child_width - 5, child_height), true,
+                          ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+        ImGui::Text("Disk Window");
+        ShowNetworkUsage(panel_height);
         ShowDiskUsage();
         ImGui::EndChild();
         ImGui::SameLine();
         // Right side
-        ImGui::BeginChild("RightChild", ImVec2(child_width, child_height), true);
+        ImGui::BeginChild("RightChild", ImVec2(child_width, child_height), true,
+                          ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
         // ShowDiskWindow();
-        ShowMemoryUsage();
-        ShowDiskUsage();
+        ShowMemoryUsage(panel_height);
+        ShowCpuPlot(panel_height);
         ImGui::EndChild();
         ImGui::End();
     }
@@ -152,7 +156,7 @@ void ShowDockSpace(bool& p_open){
         // Left pane 
         ImGui::BeginChild("ProcBottomLeft", ImVec2(left_width, bottom_height), true);
         ImGui::Text("Left (Network Window)");
-        ShowNetworkUsage();
+        ShowNetworkUsage(0);
         ImGui::EndChild();
         ImGui::SameLine();
         // Right pane 

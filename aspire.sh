@@ -1,30 +1,31 @@
-#!/usr/bin/bash
-# g++ demomain.cpp imgui/* -o build/demo $(sdl2-config --cflags --libs) -Iinclude/imgui && ./build/demo
+CXX="g++"
+SRC="main.cpp imgui/*.cpp src/*.cpp"
+OUT="build/punktop"
+CFLAGS="$(sdl2-config --cflags --libs) -Iinclude/imgui -Iinclude/implot -Iinclude -lpthread"
 
-build(){
+build() {
+    mkdir -p build
     echo "[INFO] Starting build..."
-    echo "[CMD] g++ main.cpp imgui/* src/*.cpp -o build/punktop $(sdl3-config --cflags --libs) -Iinclude/imgui -Iinclude/implot -Iinclude -lpthread"
-    g++ main.cpp imgui/*.cpp src/*.cpp -o build/punktop $(sdl2-config --cflags --libs) -Iinclude/imgui -Iinclude -lpthread
+    echo "[CMD] $CXX $SRC -o $OUT $CFLAGS"
+    $CXX $SRC -o $OUT $CFLAGS
     echo "[INFO] Build completed"
 }
 
-run(){
-    echo "[INFO] Starting build..."
-    echo "[CMD] g++ main.cpp imgui/* src/*.cpp -o build/punktop $(sdl3-config --cflags --libs) -Iinclude/imgui -Iinclude/implot -Iinclude -lpthread"
-    g++ main.cpp imgui/*.cpp src/*.cpp -o build/punktop $(sdl2-config --cflags --libs) -Iinclude/imgui -Iinclude -lpthread
-    echo "[INFO] Build completed"
-    ./build/punktop
-    rm -rf ./build/wtop
+run() {
+    build
+    echo "[INFO] Running $OUT"
+    ./$OUT
 }
 
 case "$1" in
     build|b)
-	build
-	exit 0
-	;;
+        build
+        ;;
     run|r)
-	run
-	exit 0
-	;;
+        run
+        ;;
+    *)
+        echo "[ERROR] Invalid command: $1"
+        exit 1
+        ;;
 esac
-echo "[ERROR] Invalid commad: $1"

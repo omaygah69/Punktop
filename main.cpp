@@ -22,6 +22,8 @@ int main(){
     mem_worker.detach();
     std::thread disk_worker(FetchDiskUsage);
     disk_worker.detach();
+    std::thread cpu_plot_worker(FetchCpuUsageForPlot);
+    cpu_plot_worker.detach();
     // std::thread show_thread(ShowCpuUsage);
     
     if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0){
@@ -30,7 +32,7 @@ int main(){
     }
 
     SDL_WindowFlags Window_Flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-    SDL_Window* Window = SDL_CreateWindow("Wtop", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, Window_Flags);
+    SDL_Window* Window = SDL_CreateWindow("punktop", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, Window_Flags);
 
     if(Window == nullptr){
         printf("Error Creating Widnow: %s\n", SDL_GetError());

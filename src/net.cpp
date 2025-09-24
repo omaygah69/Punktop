@@ -52,7 +52,7 @@ void GetNetworkUsage(const std::string& iface) {
     }
 }
 
-void ShowNetworkUsage() {
+void ShowNetworkUsage(float height) {
     std::vector<float> rx, tx;
     {
         std::lock_guard<std::mutex> lock(net_mutex);
@@ -63,7 +63,7 @@ void ShowNetworkUsage() {
     if (rx.empty() || tx.empty())
         return;
 
-    ImGui::BeginChild("NetUsagePanel", ImVec2(0, 0), true);
+    ImGui::BeginChild("NetUsagePanel", ImVec2(0, height), true);
 
     ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "Network Usage");
 

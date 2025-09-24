@@ -9,12 +9,14 @@ static const size_t HISTORY_SIZE = 120; //2 minutes at 1s interval
 static std::vector<float> mem_history;
 static std::mutex mem_mutex;
 
-struct MemStat {
+struct MemStat
+{
     float used_mb = 0.0f;
     float total_mb = 0.0f;
 };
 
-MemStat ReadMemStat() {
+MemStat ReadMemStat()
+{
     std::ifstream file("/proc/meminfo");
     MemStat stat;
     if (!file.is_open()) return stat;
@@ -39,7 +41,8 @@ MemStat ReadMemStat() {
     return stat;
 }
 
-void FetchMemoryUsage() {
+void FetchMemoryUsage()
+{
     while (!mem_is_finished) {
         MemStat stat = ReadMemStat();
 
@@ -59,7 +62,8 @@ void FetchMemoryUsage() {
     }
 }
 
-void ShowMemoryUsage() {
+void ShowMemoryUsage(float height)
+{
     std::vector<float> mem;
     {
         std::lock_guard<std::mutex> lock(mem_mutex);
@@ -69,7 +73,7 @@ void ShowMemoryUsage() {
     if (mem.empty())
         return;
 
-    ImGui::BeginChild("MemUsagePanel", ImVec2(0, 0), true);
+    ImGui::BeginChild("MemUsagePanel", ImVec2(0, height), true);
     ImGui::TextColored(ImVec4(0.6f, 0.8f, 1.0f, 1.0f), "Memory Usage");
     ImGui::Text("Current: %.1f%%", mem.back());
     ReadMemInfo();
@@ -91,6 +95,5 @@ void ShowMemoryUsage() {
 
         ImPlot::EndPlot();
     }
-
     ImGui::EndChild();
 }

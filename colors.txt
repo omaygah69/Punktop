@@ -1,0 +1,17 @@
+Gruvbox (Dark)
+
+The official Gruvbox dark palette isn't directly listed in available sources, but there are popular variants such as "Gruvbox Baby Dark - High Contrast." That palette contains:
+
+#8ec07c
+
+#458588
+
+#eebd35
+
+#cc241d
+
+#32302f 
+Color Hex
+
+While not the original palette, this represents the recognizable Gruvbox-style dark-theme colors. For more precise “original” Gruvbox dark scheme colors, you may need to refer to the gruvbox_256palette.sh or similar files within the official repository. 
+GitHub
