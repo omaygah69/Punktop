@@ -1,3 +1,5 @@
-build/*
+build
 src/imgui.ini
 /imgui.ini
+.cache
+
