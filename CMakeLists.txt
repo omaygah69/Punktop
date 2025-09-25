@@ -11,13 +11,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(OpenGL REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(JANSSON REQUIRED jansson)
 
 # Add your local SDL2 static library
 add_library(SDL2 STATIC IMPORTED)
-set_target_properties(SDL2 PROPERTIES
-  IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/lib/libSDL2.a
-  INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/include/SDL2
-)
+set_target_properties(
+  SDL2
+  PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/lib/libSDL2.a
+             INTERFACE_INCLUDE_DIRECTORIES
+             ${CMAKE_CURRENT_SOURCE_DIR}/include/SDL2)
 
 # ImGui library
 add_library(
@@ -29,25 +32,20 @@ add_library(
   ${CMAKE_CURRENT_SOURCE_DIR}/imgui/imgui_impl_sdl2.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/imgui/imgui_impl_sdlrenderer2.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/imgui/imgui_tables.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/imgui/imgui_widgets.cpp
-)
+  ${CMAKE_CURRENT_SOURCE_DIR}/imgui/imgui_widgets.cpp)
 
 target_include_directories(imgui
-  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include/imgui
-)
+                           PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include/imgui)
 
 target_link_libraries(imgui PUBLIC OpenGL::GL SDL2)
 
 # ImPlot library
-add_library(implot STATIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/imgui/implot.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/imgui/implot_items.cpp
-)
+add_library(implot STATIC ${CMAKE_CURRENT_SOURCE_DIR}/imgui/implot.cpp
+                          ${CMAKE_CURRENT_SOURCE_DIR}/imgui/implot_items.cpp)
 
-target_include_directories(implot
-  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include/implot/
-         ${CMAKE_CURRENT_SOURCE_DIR}/include/imgui/
-)
+target_include_directories(
+  implot PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include/implot/
+                ${CMAKE_CURRENT_SOURCE_DIR}/include/imgui/)
 
 target_link_libraries(implot PUBLIC imgui)
 
@@ -64,9 +62,13 @@ add_executable(
   ${CMAKE_CURRENT_SOURCE_DIR}/src/systemfetch.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/cpuplot.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/memoryplot.cpp
-)
+  ${CMAKE_CURRENT_SOURCE_DIR}/system.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/api.cpp)
 
-target_link_libraries(${PROJECT_NAME} PUBLIC imgui OpenGL::GL SDL2 implot)
+target_link_libraries(${PROJECT_NAME} PUBLIC imgui OpenGL::GL SDL2 implot
+                                             ${JANSSON_LIBRARIES})
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+                                                  ${JANSSON_INCLUDE_DIRS})
 
 # Dependency checks
 if(NOT OpenGL_FOUND)
