@@ -23,58 +23,60 @@ extern std::string search_query;
 //
 
 typedef struct {
-  std::string Pid;
-  std::string Name;
-  std::string User;
-  std::string Command;
-  float CpuUsage;
-  float MemUsage;
-  int ThreadCount;
+    std::string Pid;
+    std::string Name;
+    std::string ParentId;        // parent PID
+    std::string User;
+    std::string Command;
+    float CpuUsage;
+    float MemUsage;
+    int ThreadCount;
+    std::vector<int> Children; // indices into Procs
 } Process;
 
 enum SortMode {
-  no_sort,
-  name_sort,
-  name_desc,
-  pid_sort,
-  pid_desc,
-  mem_sort,
-  mem_desc,
-  cpu_sort,
-  cpu_desc,
-  thread_sort,
-  thread_desc,
+    no_sort,
+    name_sort,
+    name_desc,
+    pid_sort,
+    pid_desc,
+    mem_sort,
+    mem_desc,
+    cpu_sort,
+    cpu_desc,
+    thread_sort,
+    thread_desc,
 };
 
 struct NetStat {
-  unsigned long long rx_bytes = 0;
-  unsigned long long tx_bytes = 0;
+    unsigned long long rx_bytes = 0;
+    unsigned long long tx_bytes = 0;
 };
 
 struct NetHistory {
-  std::vector<float> rx_history;
-  std::vector<float> tx_history;
-  NetStat last_stat{};
+    std::vector<float> rx_history;
+    std::vector<float> tx_history;
+    NetStat last_stat{};
 };
 
 struct SystemInfo {
-  std::string hostname;
-  std::string kernel;
-  std::string uptime;
-  std::string os_distro;
-  std::string shell;
-  std::string desktop_env;
-  std::string arch;
-  std::string window_manager;
-  float root_usage_percent = 0.0f;
-  float root_total_gb = 0.0f;
-  std::string cpu_model;
-  std::string cpu_freq;
-  int cores = 0;
-  std::string gpu_model;
-  float ram_total_gb = 0.0f;
-  std::string swap_usage;
-  std::string battery_status;
+    std::string hostname;
+    std::string kernel;
+    std::string uptime;
+    std::string os_distro;
+    std::string shell;
+    std::string desktop_env;
+    std::string arch;
+    std::string window_manager;
+    float root_usage_percent = 0.0f;
+    float root_total_gb = 0.0f;
+    std::string cpu_model;
+    std::string cpu_freq;
+    int cores = 0;
+    std::string gpu_model;
+    float ram_total_gb = 0.0f;
+    std::string swap_usage;
+    std::string battery_status;
 };
 
 // struct NetData {
@@ -84,8 +86,8 @@ struct SystemInfo {
 // };
 
 typedef struct {
-  long long unsigned int user, nice, system, idle, iowait, irq, softirq, steal,
-      guest, guest_nice;
+    long long unsigned int user, nice, system, idle, iowait, irq, softirq, steal,
+        guest, guest_nice;
 } Core_t;
 
 extern SortMode sortMode;
@@ -117,3 +119,6 @@ SystemInfo ReadSystemInfo();
 void ShowSystemInfo(const SystemInfo &info);
 void FetchCpuUsageForPlot();
 void ShowCpuPlot(float height);
+void ShowProcessesTree();
+std::string GetProcPpid(const char* path);
+void ShowProcessNode(int idx);

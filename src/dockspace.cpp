@@ -113,7 +113,7 @@ void ShowDockSpace(bool& p_open){
     }
     
     {
-        ImGui::Begin("Proc List");
+        ImGui::Begin("Proc List", nullptr, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
         // Fixed layout ratios
         const float top_height_ratio = 0.55f;
         const float left_width_ratio = 0.5f;
@@ -123,7 +123,7 @@ void ShowDockSpace(bool& p_open){
         float left_width = region.x * left_width_ratio;
         float right_width = region.x - left_width;
         // Top child window 
-        ImGui::BeginChild("ProcTop", ImVec2(region.x, top_height), true);
+        ImGui::BeginChild("ProcTop", ImVec2(region.x, top_height), true); //ImGuiWindowFlags_NoScrollbar
         ImGui::Text("Top (Process List)");
         ReadMemInfo(); ImGui::SameLine();
         const char* sortItems[] = {
@@ -142,6 +142,14 @@ void ShowDockSpace(bool& p_open){
         }
         ImGui::SameLine();
         ImGui::Text("Sort");
+
+        // Toggle button (tree / flat)
+        static bool showTreeMode = false;
+        ImGui::SameLine();
+        if (ImGui::Button(showTreeMode ? "Flat View" : "Tree View")) {
+            showTreeMode = !showTreeMode;
+        }
+
         // Search Bar
         static char searchBuffer[64] = "";
         ImGui::SameLine();
@@ -149,7 +157,11 @@ void ShowDockSpace(bool& p_open){
         if (ImGui::InputTextWithHint("##Search", "Search process...", searchBuffer, IM_ARRAYSIZE(searchBuffer))) {
             search_query = searchBuffer;
         }
-        ShowProcessesV();
+        // Show either flat or tree
+        if (showTreeMode)
+            ShowProcessesTree();
+        else
+            ShowProcessesV();
         ImGui::EndChild();
         // Bottom container 
         ImGui::BeginChild("ProcBottom", ImVec2(region.x, bottom_height), false);

@@ -1,59 +1,53 @@
 #include "system.h"
-#include <jansson.h>
+#include "json.hpp"
 #include <thread>
+#include <fstream>
+
+using json = nlohmann::json;
 
 void WriteSystemJson() {
-  using namespace std::literals::chrono_literals;
+    using namespace std::literals::chrono_literals;
 
-  while (true) {
-    json_t *root = json_object();
+    while (true) {
+        json root;
 
-    // system
-    json_object_set_new(root, "host_name",
-                        json_string(System::s_HostName.c_str()));
-    json_object_set_new(root, "os", json_string(System::s_OS.c_str()));
-    json_object_set_new(root, "kernel", json_string(System::s_Kernel.c_str()));
-    json_object_set_new(root, "uptime", json_string(System::s_Uptime.c_str()));
-    json_object_set_new(root, "shell", json_string(System::s_Shell.c_str()));
-    json_object_set_new(root, "desktop",
-                        json_string(System::s_Desktop.c_str()));
-    json_object_set_new(root, "window_manager",
-                        json_string(System::s_WindowManager.c_str()));
+        // system
+        root["host_name"]      = System::s_HostName;
+        root["os"]             = System::s_OS;
+        root["kernel"]         = System::s_Kernel;
+        root["uptime"]         = System::s_Uptime;
+        root["shell"]          = System::s_Shell;
+        root["desktop"]        = System::s_Desktop;
+        root["window_manager"] = System::s_WindowManager;
 
-    // hardware
-    json_object_set_new(root, "architecture",
-                        json_string(System::s_Arch.c_str()));
-    json_object_set_new(root, "cpu_freq",
-                        json_string(System::s_CpuFreq.c_str()));
+        // hardware
+        root["architecture"]   = System::s_Arch;
+        root["cpu_freq"]       = System::s_CpuFreq;
 
-    // cpu
-    json_object_set_new(root, "cpu_model",
-                        json_string(System::s_CpuModel.c_str()));
-    json_object_set_new(root, "cpu_usage", json_real(System::s_CpuUsage));
+        // cpu
+        root["cpu_model"]      = System::s_CpuModel;
+        root["cpu_usage"]      = System::s_CpuUsage;
 
-    // core
-    json_t *cores = json_array();
-    for (float usage : System::s_CpuCore) {
-      json_array_append_new(cores, json_real(usage));
+        // core
+        root["cpu_core"]       = System::s_CpuCore;  // vector<float> directly works
+
+        // ram
+        root["ram_total"]      = System::s_RamTotal;
+        root["ram_used"]       = System::s_RamUsed;
+        root["ram_free"]       = System::s_RamFree;
+
+        // disk
+        root["root_disk"]      = System::s_RootDisk;
+        root["swap_disk"]      = System::s_SwapDisk;
+
+        // write to file
+        try {
+            std::ofstream file("system.json");
+            file << root.dump(4); // pretty print with indent = 4
+        } catch (const std::exception &e) {
+            fprintf(stderr, "Failed to write system.json: %s\n", e.what());
+        }
+
+        std::this_thread::sleep_for(1s);
     }
-    json_object_set_new(root, "cpu_core", cores);
-
-    // ram
-    json_object_set_new(root, "ram_total", json_real(System::s_RamTotal));
-    json_object_set_new(root, "ram_used", json_real(System::s_RamUsed));
-    json_object_set_new(root, "ram_free", json_real(System::s_RamFree));
-
-    // disk
-    json_object_set_new(root, "root_disk", json_real(System::s_RootDisk));
-    json_object_set_new(root, "swap_disk", json_real(System::s_SwapDisk));
-
-    if (json_dump_file(root, "system.json", JSON_INDENT(4)) != 0) {
-      fprintf(stderr, "Failed to write system.json\n");
-    }
-
-    // clean
-    json_decref(root);
-
-    std::this_thread::sleep_for(1s);
-  }
 }

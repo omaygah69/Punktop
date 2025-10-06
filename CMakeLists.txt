@@ -12,7 +12,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(OpenGL REQUIRED)
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(JANSSON REQUIRED jansson)
 
 # Add your local SDL2 static library
 add_library(SDL2 STATIC IMPORTED)
@@ -65,10 +64,12 @@ add_executable(
   ${CMAKE_CURRENT_SOURCE_DIR}/system.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/api.cpp)
 
-target_link_libraries(${PROJECT_NAME} PUBLIC imgui OpenGL::GL SDL2 implot
-                                             ${JANSSON_LIBRARIES})
-target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-                                                  ${JANSSON_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} PUBLIC imgui OpenGL::GL SDL2 implot)
+
+target_include_directories(${PROJECT_NAME} PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
 
 # Dependency checks
 if(NOT OpenGL_FOUND)

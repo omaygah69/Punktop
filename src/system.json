@@ -1,0 +1,28 @@
+{
+    "architecture": "x86_64",
+    "cpu_core": [
+        0.0,
+        0.0,
+        0.0,
+        10.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+    ],
+    "cpu_freq": "2774.634 MHz",
+    "cpu_model": "AMD Ryzen 5 3500U with Radeon Vega Mobile Gfx\n",
+    "cpu_usage": 2.4691357612609863,
+    "desktop": "i3",
+    "host_name": "BocchiTheArch",
+    "kernel": "Linux 6.12.48-1-lts",
+    "os": "Arch Linux",
+    "ram_free": 9071.41796875,
+    "ram_total": 9880.06640625,
+    "ram_used": 808.6484375,
+    "root_disk": 63.29730224609375,
+    "shell": "bash",
+    "swap_disk": 0.0,
+    "uptime": "40m",
+    "window_manager": "i3"
+}
