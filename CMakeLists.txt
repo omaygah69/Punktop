@@ -12,7 +12,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(OpenGL REQUIRED)
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(JANSSON REQUIRED jansson)
 
 # Add your local SDL2 static library
 add_library(SDL2 STATIC IMPORTED)
