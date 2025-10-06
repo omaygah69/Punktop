@@ -62,6 +62,7 @@ add_executable(
   ${CMAKE_CURRENT_SOURCE_DIR}/src/systemfetch.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/cpuplot.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/memoryplot.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/statsfornerds.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/system.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/api.cpp)
 
