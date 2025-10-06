@@ -12,7 +12,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(OpenGL REQUIRED)
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(JANSSON REQUIRED jansson)
 
 # Add your local SDL2 static library
 add_library(SDL2 STATIC IMPORTED)
@@ -62,6 +61,7 @@ add_executable(
   ${CMAKE_CURRENT_SOURCE_DIR}/src/systemfetch.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/cpuplot.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/memoryplot.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/statsfornerds.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/system.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/api.cpp)
 
