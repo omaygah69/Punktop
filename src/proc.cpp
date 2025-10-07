@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace fs = std::filesystem;
 static const fs::path dir_path = "/proc/";
@@ -18,129 +19,121 @@ static std::string selected_pid;
 static int current_match_index;
 SortMode sortMode = no_sort;
 std::string search_query;
+static std::unordered_set<std::string> pinned_pids;
 
 void ShowProcessesV() {
-    ImGui::BeginChild("ProcScroll", ImVec2(0, 400), true,
-                      ImGuiWindowFlags_NoScrollbar |
-                      ImGuiWindowFlags_NoScrollWithMouse);
+    ImGui::BeginChild("ProcScroll", ImVec2(0, 400), true);
 
     static ImGuiTableFlags flags =
         ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_RowBg |
         ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_Resizable |
-        ImGuiTableFlags_Sortable | ImGuiTableFlags_ScrollY;
+        ImGuiTableFlags_ScrollY;
 
+    // Filtered indexes
     std::vector<int> filtered_indexes;
-    if (!search_query.empty()) {
-        for (int i = 0; i < (int)Procs.size(); i++) {
-            const Process &proc = Procs[i];
-            if (proc.Name.find(search_query) != std::string::npos ||
-                proc.Pid.find(search_query) != std::string::npos ||
-                proc.Command.find(search_query) != std::string::npos) {
-                filtered_indexes.push_back(i);
-            }
+    for (int i = 0; i < (int)Procs.size(); i++) {
+        const Process &proc = Procs[i];
+        if (search_query.empty() ||
+            proc.Name.find(search_query) != std::string::npos ||
+            proc.Pid.find(search_query) != std::string::npos ||
+            proc.Command.find(search_query) != std::string::npos) {
+            filtered_indexes.push_back(i);
         }
-    } else {
-        // No search active, show all
-        filtered_indexes.resize(Procs.size());
-        std::iota(filtered_indexes.begin(), filtered_indexes.end(), 0);
+    }
+
+    // Split pinned and normal
+    std::vector<int> pinned_indexes, normal_indexes;
+    for (int idx : filtered_indexes) {
+        if (pinned_pids.count(Procs[idx].Pid))
+            pinned_indexes.push_back(idx);
+        else
+            normal_indexes.push_back(idx);
     }
 
     if (ImGui::BeginTable("ProcTable", 7, flags)) {
-        ImGui::TableSetupScrollFreeze(0, 1); // Freeze top row
+        ImGui::TableSetupScrollFreeze(0, 1);
         ImGui::TableSetupColumn("PID", ImGuiTableColumnFlags_WidthFixed, 60.0f);
         ImGui::TableSetupColumn("User", ImGuiTableColumnFlags_WidthFixed, 80.0f);
         ImGui::TableSetupColumn("Name");
         ImGui::TableSetupColumn("%CPU", ImGuiTableColumnFlags_WidthFixed, 60.0f);
-        ImGui::TableSetupColumn("Mem (MB)", ImGuiTableColumnFlags_WidthFixed,
-                                80.0f);
+        ImGui::TableSetupColumn("Mem (MB)", ImGuiTableColumnFlags_WidthFixed, 80.0f);
         ImGui::TableSetupColumn("Threads", ImGuiTableColumnFlags_WidthFixed, 60.0f);
         ImGui::TableSetupColumn("Command");
         ImGui::TableHeadersRow();
 
-        ImGuiListClipper clipper;
-        clipper.Begin((int)filtered_indexes.size());
-        while (clipper.Step()) {
-            for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; row++) {
-                int i = filtered_indexes[row];
-                const Process &proc = Procs[i];
-                bool is_selected = (proc.Pid == selected_pid);
+        auto render_row = [&](int i) {
+            const Process &proc = Procs[i];
+            bool is_selected = (proc.Pid == selected_pid);
+            bool is_pinned = pinned_pids.count(proc.Pid);
 
-                ImGui::TableNextRow();
+            ImGui::TableNextRow();
+            ImGui::PushID(i);
+            ImGui::TableNextColumn();
 
-                // Clickable row start
-                ImGui::PushID(i);
-                ImGui::TableNextColumn();
-
-                bool is_active_match =
-                    (!filtered_indexes.empty() && current_match_index >= 0 &&
-                     row == current_match_index);
-
-                // Detect row click
-                if (ImGui::Selectable(proc.Pid.c_str(), is_selected,
-                                      ImGuiSelectableFlags_SpanAllColumns)) {
-                    if (is_selected)
-                        selected_pid.clear();
-                    else
-                        selected_pid = proc.Pid;
-                }
-
-                if (is_active_match) {
-                    ImGui::SetItemDefaultFocus();
-                    // ImGui::SetScrollHereY();
-                }
-
-                // Context menu
-                if (ImGui::BeginPopupContextItem()) {
-                    if (ImGui::MenuItem("Kill Process")) {
-                        // Kill Proc
-                        std::cout << "Killing PID: " << proc.Pid << "\n";
-                        KillProc(proc.Pid);
-                    }
-                    if (ImGui::MenuItem("Pin Process")) {
-                        // TODO: add to pinned list
-                        std::cout << "Pinning PID: " << proc.Pid << "\n";
-                    }
-                    ImGui::EndPopup();
-                }
-
-                // User
-                ImGui::TableNextColumn();
-                ImGui::TextUnformatted(proc.User.c_str());
-
-                // Name
-                ImGui::TableNextColumn();
-                ImGui::TextUnformatted(proc.Name.empty() ? "{Unknown}"
-                                       : proc.Name.c_str());
-
-                // CPU
-                ImGui::TableNextColumn();
-                ImVec4 cpu_color =
-                    (proc.CpuUsage > 50.0f)   ? ImVec4(1.0f, 0.3f, 0.3f, 1.0f)
-                    : (proc.CpuUsage > 20.0f) ? ImVec4(1.0f, 1.0f, 0.0f, 1.0f)
-                    : ImVec4(0.3f, 1.0f, 0.3f, 1.0f);
-                ImGui::TextColored(cpu_color, "%.1f", proc.CpuUsage);
-
-                // Memory
-                ImGui::TableNextColumn();
-                float memMB = proc.MemUsage / 1024.0f;
-                ImVec4 mem_color = (memMB > 200.0f)   ? ImVec4(1.0f, 0.3f, 0.3f, 1.0f)
-                    : (memMB > 100.0f) ? ImVec4(1.0f, 1.0f, 0.0f, 1.0f)
-                    : ImVec4(0.3f, 1.0f, 0.3f, 1.0f);
-                ImGui::TextColored(mem_color, "%.1f", memMB);
-
-                // Threads
-                ImGui::TableNextColumn();
-                ImGui::Text("%d", proc.ThreadCount);
-
-                // Command
-                ImGui::TableNextColumn();
-                ImGui::TextUnformatted(proc.Command.c_str());
-
-                ImGui::PopID();
+            if (ImGui::Selectable(proc.Pid.c_str(), is_selected,
+                                  ImGuiSelectableFlags_SpanAllColumns)) {
+                selected_pid = (is_selected ? "" : proc.Pid);
             }
-        }
+
+            // Context menu
+            if (ImGui::BeginPopupContextItem()) {
+                if (ImGui::MenuItem(is_pinned ? "Unpin Process" : "Pin Process")) {
+                    if (is_pinned)
+                        pinned_pids.erase(proc.Pid);
+                    else
+                        pinned_pids.insert(proc.Pid);
+                }
+                if (ImGui::MenuItem("Kill Process")) {
+                    KillProc(proc.Pid);
+                }
+                ImGui::EndPopup();
+            }
+
+            ImGui::TableNextColumn();
+            ImGui::TextUnformatted(proc.User.c_str());
+
+            ImGui::TableNextColumn();
+            if (is_pinned)
+                ImGui::TextColored(ImVec4(0.7f, 0.8f, 1.0f, 1.0f), "📌 %s", proc.Name.c_str());
+            else
+                ImGui::TextUnformatted(proc.Name.c_str());
+
+            ImGui::TableNextColumn();
+            ImVec4 cpu_color =
+                (proc.CpuUsage > 50.0f) ? ImVec4(1, 0.3f, 0.3f, 1)
+                : (proc.CpuUsage > 20.0f) ? ImVec4(1, 1, 0, 1)
+                                          : ImVec4(0.3f, 1, 0.3f, 1);
+            ImGui::TextColored(cpu_color, "%.1f", proc.CpuUsage);
+
+            ImGui::TableNextColumn();
+            float memMB = proc.MemUsage / 1024.0f;
+            ImVec4 mem_color =
+                (memMB > 200) ? ImVec4(1, 0.3f, 0.3f, 1)
+                : (memMB > 100) ? ImVec4(1, 1, 0, 1)
+                                : ImVec4(0.3f, 1, 0.3f, 1);
+            ImGui::TextColored(mem_color, "%.1f", memMB);
+
+            ImGui::TableNextColumn();
+            ImGui::Text("%d", proc.ThreadCount);
+
+            ImGui::TableNextColumn();
+            ImGui::TextUnformatted(proc.Command.c_str());
+            ImGui::PopID();
+        };
+
+        // Render pinned processes first
+        for (int i : pinned_indexes)
+            render_row(i);
+
+        if (!pinned_indexes.empty())
+            ImGui::Separator();
+
+        for (int i : normal_indexes)
+            render_row(i);
+
         ImGui::EndTable();
     }
+
     ImGui::EndChild();
 }
 
@@ -502,7 +495,7 @@ void ShowProcessNode(int idx) {
     ImGui::TableNextRow();
     ImGui::PushID(idx);
 
-    // --- Color logic ---
+    // Color logic
     ImVec4 cpu_color =
         (proc.CpuUsage > 50.0f)   ? ImVec4(1.0f, 0.3f, 0.3f, 1.0f)  // red
         : (proc.CpuUsage > 20.0f) ? ImVec4(1.0f, 1.0f, 0.0f, 1.0f)  // yellow
@@ -524,7 +517,6 @@ void ShowProcessNode(int idx) {
     float intensity = std::max(0.2f, 1.0f - depth * 0.1f);
     ImVec4 row_tint = ImVec4(intensity, intensity, 1.0f, 1.0f);
 
-    // --- Draw Tree Node ---
     ImGui::TableNextColumn();
     ImGuiTreeNodeFlags nodeFlags =
         ImGuiTreeNodeFlags_SpanFullWidth |
@@ -540,7 +532,7 @@ void ShowProcessNode(int idx) {
         selected_pid = (proc.Pid == selected_pid ? "" : proc.Pid);
     }
 
-    // --- Other columns ---
+    // Other columns 
     ImGui::TableNextColumn();
     ImGui::TextUnformatted(proc.User.c_str());
 
@@ -559,7 +551,7 @@ void ShowProcessNode(int idx) {
     ImGui::TableNextColumn();
     ImGui::TextUnformatted(proc.Command.c_str());
 
-    // --- Recursive children rendering ---
+    // Recursive children rendering
     if (open) {
         for (int childIdx : proc.Children) {
             ShowProcessNode(childIdx);
@@ -568,4 +560,16 @@ void ShowProcessNode(int idx) {
     }
 
     ImGui::PopID();
+}
+
+void CleanupPinned() {
+    std::unordered_set<std::string> valid;
+    for (const auto &p : Procs)
+        valid.insert(p.Pid);
+
+    for (auto it = pinned_pids.begin(); it != pinned_pids.end();)
+        if (!valid.count(*it))
+            it = pinned_pids.erase(it);
+        else
+            ++it;
 }
