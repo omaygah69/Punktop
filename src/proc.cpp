@@ -502,27 +502,64 @@ void ShowProcessNode(int idx) {
     ImGui::TableNextRow();
     ImGui::PushID(idx);
 
-    // Tree node inside first column (PID)
+    // --- Color logic ---
+    ImVec4 cpu_color =
+        (proc.CpuUsage > 50.0f)   ? ImVec4(1.0f, 0.3f, 0.3f, 1.0f)  // red
+        : (proc.CpuUsage > 20.0f) ? ImVec4(1.0f, 1.0f, 0.0f, 1.0f)  // yellow
+        : ImVec4(0.3f, 1.0f, 0.3f, 1.0f);                           // green
+
+    float memMB = proc.MemUsage / 1024.0f;
+    ImVec4 mem_color =
+        (memMB > 200.0f)   ? ImVec4(1.0f, 0.3f, 0.3f, 1.0f)  // red
+        : (memMB > 100.0f) ? ImVec4(1.0f, 1.0f, 0.0f, 1.0f)  // yellow
+        : ImVec4(0.3f, 1.0f, 0.3f, 1.0f);                   // green
+
+    // subtle color by depth in tree (for hierarchy clarity)
+    int depth = 0;
+    for (int parent = std::stoi(proc.ParentId);
+         parent != 0 && parent < (int)Procs.size(); ) {
+        parent = std::stoi(Procs[parent].ParentId);
+        depth++;
+    }
+    float intensity = std::max(0.2f, 1.0f - depth * 0.1f);
+    ImVec4 row_tint = ImVec4(intensity, intensity, 1.0f, 1.0f);
+
+    // --- Draw Tree Node ---
     ImGui::TableNextColumn();
     ImGuiTreeNodeFlags nodeFlags =
         ImGuiTreeNodeFlags_SpanFullWidth |
         (proc.Children.empty() ? ImGuiTreeNodeFlags_Leaf : 0) |
         ((proc.Pid == selected_pid) ? ImGuiTreeNodeFlags_Selected : 0);
 
+    // Use tinted color for text (PID)
+    ImGui::PushStyleColor(ImGuiCol_Text, row_tint);
     bool open = ImGui::TreeNodeEx(proc.Pid.c_str(), nodeFlags, "%s", proc.Pid.c_str());
+    ImGui::PopStyleColor();
+
     if (ImGui::IsItemClicked()) {
         selected_pid = (proc.Pid == selected_pid ? "" : proc.Pid);
     }
 
-    // Other columns (aligned in same row)
-    ImGui::TableNextColumn(); ImGui::TextUnformatted(proc.User.c_str());
-    ImGui::TableNextColumn(); ImGui::TextUnformatted(proc.Name.c_str());
-    ImGui::TableNextColumn(); ImGui::Text("%.1f", proc.CpuUsage);
-    ImGui::TableNextColumn(); ImGui::Text("%.1f", proc.MemUsage / 1024.0f);
-    ImGui::TableNextColumn(); ImGui::Text("%d", proc.ThreadCount);
-    ImGui::TableNextColumn(); ImGui::TextUnformatted(proc.Command.c_str());
+    // --- Other columns ---
+    ImGui::TableNextColumn();
+    ImGui::TextUnformatted(proc.User.c_str());
 
-    // Draw children
+    ImGui::TableNextColumn();
+    ImGui::TextUnformatted(proc.Name.c_str());
+
+    ImGui::TableNextColumn();
+    ImGui::TextColored(cpu_color, "%.1f", proc.CpuUsage);
+
+    ImGui::TableNextColumn();
+    ImGui::TextColored(mem_color, "%.1f", memMB);
+
+    ImGui::TableNextColumn();
+    ImGui::Text("%d", proc.ThreadCount);
+
+    ImGui::TableNextColumn();
+    ImGui::TextUnformatted(proc.Command.c_str());
+
+    // --- Recursive children rendering ---
     if (open) {
         for (int childIdx : proc.Children) {
             ShowProcessNode(childIdx);

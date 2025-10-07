@@ -68,6 +68,10 @@ void ShowDockSpace(bool& p_open){
     {
         ImGui::Begin("SpaceY Inc.");
         ImGui::Text("Hello from basementq!");
+        // control refresh speed
+        ImGui::SliderFloat("Reading Interval (sec)", reinterpret_cast<float*>(&read_speed),
+                           0.2f, 5.0f, "%.1fs");
+
         ImVec2 region = ImGui::GetContentRegionAvail();
         float split_ratio   = 0.5f;
         float child_width   = region.x * split_ratio;
@@ -76,7 +80,7 @@ void ShowDockSpace(bool& p_open){
         // Left side
         ImGui::BeginChild("LeftChild", ImVec2(region.x - child_width - 5, child_height), true,
                           ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-        ImGui::Text("Disk Window");
+        // ImGui::Text("Disk Window");
         ShowNetworkUsage(panel_height);
         ShowDiskUsage();
         ImGui::EndChild();

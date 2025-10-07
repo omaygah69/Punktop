@@ -8,6 +8,7 @@ static std::atomic<bool> net_is_finished{false};
 static const size_t HISTORY_SIZE = 120; // ~2 minutes at 1s interval
 static NetHistory net_history;
 static std::mutex net_mutex;
+extern std::atomic<float> read_speed{1.0f};
 
 NetStat ReadNetStat(const std::string& iface) {
     NetStat stat;
@@ -29,7 +30,9 @@ NetStat ReadNetStat(const std::string& iface) {
 
 void GetNetworkUsage(const std::string& iface) {
     NetStat prev = ReadNetStat(iface);
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::this_thread::sleep_for(std::chrono::milliseconds(
+         static_cast<int>(read_speed.load() * 1000)));
+
 
     while (!net_is_finished) {
         NetStat curr = ReadNetStat(iface);
@@ -48,7 +51,9 @@ void GetNetworkUsage(const std::string& iface) {
         }
 
         prev = curr;
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        // ⏱️ dynamic refresh interval
+        std::this_thread::sleep_for(std::chrono::milliseconds(
+            static_cast<int>(read_speed.load() * 1000)));
     }
 }
 
@@ -67,6 +72,13 @@ void ShowNetworkUsage(float height) {
 
     ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "Network Usage");
 
+    ImGui::SameLine();
+    ImGui::TextDisabled("(?)");
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Adjust how often the network stats are read.\nLower = faster updates.");
+
+    ImGui::Separator();
+
     // Current values
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3f, 0.9f, 0.3f, 1.0f));
     ImGui::Text("RX: %.1f KB/s", rx.back());
@@ -81,10 +93,10 @@ void ShowNetworkUsage(float height) {
     ImGui::Spacing();
 
     // Shaded plot fills
-    if (ImPlot::BeginPlot("##NetPlot", ImVec2(-1,200),
+    if (ImPlot::BeginPlot("##NetPlot", ImVec2(-1, 200),
                           ImPlotFlags_NoTitle | ImPlotFlags_NoLegend |
-                          ImPlotFlags_NoMouseText | ImPlotFlags_CanvasOnly)) {
-        ImPlot::SetupAxes("Wifi Bruh", "KB/s",
+                              ImPlotFlags_NoMouseText | ImPlotFlags_CanvasOnly)) {
+        ImPlot::SetupAxes("Time", "KB/s",
                           ImPlotAxisFlags_NoTickLabels,
                           ImPlotAxisFlags_NoTickLabels);
         ImPlot::SetupAxesLimits(0, HISTORY_SIZE, 0, 2000, ImGuiCond_Always);
