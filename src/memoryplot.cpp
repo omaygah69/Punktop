@@ -1,6 +1,6 @@
 #include "../include/implot/implot.h"
 #include "../punktop.h"
-#include "system.h"
+#include "../system.h"
 #include <chrono>
 #include <fstream>
 #include <sstream>

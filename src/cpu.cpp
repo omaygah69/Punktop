@@ -3,7 +3,7 @@
 #include <chrono>
 #define PATH "/proc/stat"
 #define BUFFER_SIZE 256
-#include "system.h"
+#include "../system.h"
 
 static std::vector<float> cpu_usage_list;
 std::atomic<bool> is_finished{false};

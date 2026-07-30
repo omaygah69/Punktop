@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 CXX="g++"
-SRC="main.cpp imgui/*.cpp src/*.cpp"
+SRC="main.cpp imgui/*.cpp src/*.cpp system.cpp api.cpp lib/libSDL2.a" 
 OUT="build/punktop"
 CFLAGS="$(sdl2-config --cflags --libs) -Iinclude/imgui -Iinclude/implot -Iinclude -lpthread"
 
