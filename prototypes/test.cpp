@@ -1,5 +1,8 @@
+#define NO_FONT_AWESOME
 #include <iostream>
 #include "raylib.h"
+#include "imgui.h"
+#include "rlImGui.h"
 
 int main()
 {
