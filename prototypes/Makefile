@@ -1,8 +1,8 @@
 CC = clang++ 
-SRC = exp.cpp libraylib.a imgui/*.cpp rlImGui.cpp
+SRC = exp.cpp libraylib.a Imgui/*.cpp rlImGui.cpp
 OUT = raytest
 LIBS = -lX11 -lXrandr -lXi -lXcursor -lXinerama -lGL -lm -ldl -lpthread
-INCLUDE = -Iinclude -Iinclude/imgui -Iextras
+INCLUDE = -Iinclude -Iextras -IImgui
 
 .PHONY: all clean
 
