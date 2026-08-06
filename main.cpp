@@ -4,7 +4,7 @@
 #include "./include/implot/implot.h"
 #include "./include/implot/implot_internal.h"
 #include "./punktop.h"
-#include "api.h"
+#include "src/api.h"
 #include "./include/SDL2/SDL.h"
 #include <iostream>
 #include <stdio.h>

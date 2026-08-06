@@ -1,6 +1,6 @@
 #include "../include/implot/implot.h"
 #include "../punktop.h"
-#include "../system.h"
+#include "system.h"
 #include <filesystem>
 #include <fstream>
 #include <ifaddrs.h>
