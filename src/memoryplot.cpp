@@ -1,4 +1,4 @@
-#include "../include/implot/implot.h"
+#include "implot.h"
 #include "../punktop.h"
 #include "system.h"
 #include <chrono>
@@ -92,11 +92,11 @@ void ShowMemoryUsage(float height) {
                           ImPlotAxisFlags_NoTickLabels);
         ImPlot::SetupAxesLimits(0, HISTORY_SIZE, 0, 100, ImGuiCond_Always);
 
-        ImPlot::PushStyleColor(ImPlotCol_Line, ImVec4(0.3f, 0.6f, 0.9f, 1.0f));
-        ImPlot::PlotLine("Mem", mem.data(), (int)mem.size());
-        ImPlot::PushStyleColor(ImPlotCol_Fill, ImVec4(0.3f, 0.6f, 0.9f, 0.2f));
-        ImPlot::PlotShaded("Mem", mem.data(), (int)mem.size(), 0.0f);
-        ImPlot::PopStyleColor(2);
+	ImVec4 mem_color(0.3f, 0.6f, 0.9f, 1.0f);
+        ImPlot::PlotLine("Mem", mem.data(), (int)mem.size(), 1.0, 0.0,
+			 {ImPlotProp_LineColor, mem_color});
+        ImPlot::PlotShaded("Mem", mem.data(), (int)mem.size(), 0.0f, 1.0, 0.0,
+			  {ImPlotProp_FillColor, mem_color});
 
         ImPlot::EndPlot();
     }

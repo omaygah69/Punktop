@@ -1,4 +1,4 @@
-#include "../include/implot/implot.h"
+#include "implot.h"
 #include "../punktop.h"
 #include <atomic>
 #include <chrono>
@@ -76,11 +76,13 @@ void ShowDiskUsage() {
                           ImPlotAxisFlags_NoTickLabels);
         ImPlot::SetupAxesLimits(0, DISK_HISTORY_SIZE, 0, 100, ImGuiCond_Always);
 
-        ImPlot::PushStyleColor(ImPlotCol_Line, ImVec4(0.9f, 0.7f, 0.3f, 1.0f));
-        ImPlot::PlotLine("Disk", disk.data(), (int)disk.size());
-        ImPlot::PushStyleColor(ImPlotCol_Fill, ImVec4(0.9f, 0.7f, 0.3f, 0.2f));
-        ImPlot::PlotShaded("Disk", disk.data(), (int)disk.size(), 0.0f);
-        ImPlot::PopStyleColor(2);
+        // ImPlot::PushStyleColor(ImPlotCol_Line, ImVec4(0.9f, 0.7f, 0.3f, 1.0f));
+        ImPlot::PlotLine("Disk", disk.data(), (int)disk.size(), 1.0, 0.0,
+			 {ImPlotProp_LineColor, ImVec4(0.9f, 0.7f, 0.3f, 1.0f)});
+        // ImPlot::PushStyleColor(ImPlotCol_Fill, ImVec4(0.9f, 0.7f, 0.3f, 0.2f));
+        ImPlot::PlotShaded("Disk", disk.data(), (int)disk.size(), 0.0f, 1.0, 0.0,
+			   {ImPlotProp_FillColor, ImVec4(0.9f, 0.7f, 0.3f, 0.2f)});
+        // ImPlot::PopStyleColor(2);
 
         ImPlot::EndPlot();
     }

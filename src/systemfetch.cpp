@@ -1,4 +1,4 @@
-#include "../include/implot/implot.h"
+#include "implot.h"
 #include "../punktop.h"
 #include "system.h"
 #include <filesystem>

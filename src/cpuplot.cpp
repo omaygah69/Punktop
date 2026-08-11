@@ -1,4 +1,4 @@
-#include "../include/implot/implot.h"
+#include "implot.h"
 #include "../punktop.h"
 #include <atomic>
 #include <fstream>
@@ -76,8 +76,9 @@ void ShowCpuPlot(float height) {
     if (cpu.empty())
         return;
 
+    ImVec4 cpu_color(0.9f, 0.3f, 0.3f, 1.0f);
     ImGui::BeginChild("CpuUsagePanel", ImVec2(0, height), true);
-    ImGui::TextColored(ImVec4(0.9f, 0.3f, 0.3f, 1.0f), "CPU Usage");
+    ImGui::TextColored(cpu_color, "CPU Usage");
     ImGui::Text("Current: %.1f%%", cpu.back());
     ImGui::Spacing();
 
@@ -88,11 +89,24 @@ void ShowCpuPlot(float height) {
                           ImPlotAxisFlags_NoTickLabels);
         ImPlot::SetupAxesLimits(0, HISTORY_SIZE, 0, 100, ImGuiCond_Always);
 
-        ImPlot::PushStyleColor(ImPlotCol_Line, ImVec4(0.9f, 0.3f, 0.3f, 1.0f));
-        ImPlot::PlotLine("CPU", cpu.data(), (int)cpu.size());
-        ImPlot::PushStyleColor(ImPlotCol_Fill, ImVec4(0.9f, 0.3f, 0.3f, 0.2f));
-        ImPlot::PlotShaded("CPU", cpu.data(), (int)cpu.size(), 0.0f);
-        ImPlot::PopStyleColor(2);
+	// [INFO] Read and review changes before deletion.
+        // ImPlot::PushStyleColor(ImPlotCol_Line, ImVec4(0.9f, 0.3f, 0.3f, 1.0f));
+        // ImPlot::PlotLine("CPU", cpu.data(), (int)cpu.size());
+        // ImPlot::PushStyleColor(ImPlotCol_Fill, ImVec4(0.9f, 0.3f, 0.3f, 0.2f));
+        // ImPlot::PlotShaded("CPU", cpu.data(), (int)cpu.size(), 0.0f);
+        // ImPlot::PopStyleColor(2);
+
+	// [INFO] Read changes for PlotShaded
+	// ImPlot::PlotShaded's single-array overload should be (label, values, count, y_ref, xscale, xstart, spec)
+	// I wrote it like this to show ImPLotSpec
+	ImPlotSpec line_spec;
+	line_spec.LineColor = cpu_color;
+	ImPlot::PlotLine("CPU", cpu.data(), (int)cpu.size(), 1.0, 0.0, line_spec);
+        // ImPlot::PlotLine("CPU", cpu.data(), (int)cpu.size(),
+        //                  {ImPlotProp_LineColor, cpu_color});
+        ImPlot::PlotShaded("CPU", cpu.data(), (int)cpu.size(), 0.0f, 1.0f, 0.0f,
+                           {ImPlotProp_FillColor, ImVec4(cpu_color.x, cpu_color.y, cpu_color.z, 0.2f)});
+
 
         ImPlot::EndPlot();
     }

@@ -1,5 +1,5 @@
 #include "../punktop.h"
-#include "../include/implot/implot.h"
+#include "implot.h"
 #include <fstream>
 #include <sstream>
 #include <chrono>
@@ -102,18 +102,22 @@ void ShowNetworkUsage(float height) {
         ImPlot::SetupAxesLimits(0, HISTORY_SIZE, 0, 2000, ImGuiCond_Always);
 
         // RX green line + shaded area
-        ImPlot::PushStyleColor(ImPlotCol_Line, ImVec4(0.3f, 0.9f, 0.3f, 1.0f));
-        ImPlot::PlotLine("RX", rx.data(), (int)rx.size());
-        ImPlot::PushStyleColor(ImPlotCol_Fill, ImVec4(0.3f, 0.9f, 0.3f, 0.2f));
-        ImPlot::PlotShaded("RX", rx.data(), (int)rx.size(), 0.0f);
-        ImPlot::PopStyleColor(2);
+        // ImPlot::PushStyleColor(ImPlotCol_Line, ImVec4(0.3f, 0.9f, 0.3f, 1.0f));
+        ImPlot::PlotLine("RX", rx.data(), (int)rx.size(), 1.0, 0.0,
+			 {ImPlotProp_LineColor, ImVec4(0.3f, 0.9f, 0.3f, 1.0f)});
+        // ImPlot::PushStyleColor(ImPlotCol_Fill, ImVec4(0.3f, 0.9f, 0.3f, 0.2f));
+        ImPlot::PlotShaded("RX", rx.data(), (int)rx.size(), 0.0f, 1.0, 0.0,
+			   {ImPlotProp_FillColor, ImVec4(0.3f, 0.9f, 0.3f, 0.2f)});
+        // ImPlot::PopStyleColor(2);
 
         // TX red line + shaded area
-        ImPlot::PushStyleColor(ImPlotCol_Line, ImVec4(0.9f, 0.4f, 0.4f, 1.0f));
-        ImPlot::PlotLine("TX", tx.data(), (int)tx.size());
-        ImPlot::PushStyleColor(ImPlotCol_Fill, ImVec4(0.9f, 0.4f, 0.4f, 0.2f));
-        ImPlot::PlotShaded("TX", tx.data(), (int)tx.size(), 0.0f);
-        ImPlot::PopStyleColor(2);
+        // ImPlot::PushStyleColor(ImPlotCol_Line, ImVec4(0.9f, 0.4f, 0.4f, 1.0f));
+        ImPlot::PlotLine("TX", tx.data(), (int)tx.size(), 1.0, 0.0,
+			 {ImPlotProp_LineColor, ImVec4(0.9f, 0.4f, 0.4f, 1.0f)});
+        // ImPlot::PushStyleColor(ImPlotCol_Fill, ImVec4(0.9f, 0.4f, 0.4f, 0.2f));
+        ImPlot::PlotShaded("TX", tx.data(), (int)tx.size(), 0.0f, 1.0, 0.0,
+			   {ImPlotProp_FillColor, ImVec4(0.9f, 0.4f, 0.4f, 0.2f)});
+        // ImPlot::PopStyleColor(2);
 
         ImPlot::EndPlot();
     }
