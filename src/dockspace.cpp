@@ -55,8 +55,8 @@ void ShowDockSpace(bool& p_open){
                     // auto dock_id_right = ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Right, 0.3f, nullptr, &dockspace_id);
 
                     ImGuiID dock_main_id = dockspace_id;
-                    ImGui::DockBuilderDockWindow("SpaceY Inc.", dock_main_id);
-                    ImGui::DockBuilderDockWindow("Sizif-9 Rocket Telemetry", dock_main_id);
+                    ImGui::DockBuilderDockWindow("Plot", dock_main_id);
+                    ImGui::DockBuilderDockWindow("System Info", dock_main_id);
                     ImGui::DockBuilderDockWindow("Proc List", dock_main_id);
                     ImGui::DockBuilderFinish(dockspace_id);
                     ImGui::SetWindowFocus("Proc List"); // set focus to proc list firsst

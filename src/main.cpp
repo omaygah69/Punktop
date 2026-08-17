@@ -5,8 +5,7 @@
 #include "implot.h" 
 #include "implot_internal.h" 
 #include "../punktop.h"
-#include "../src/api.h"
-// #include "./include/SDL2/SDL.h"
+#include "api.h"
 #include <iostream>
 #include <stdio.h>
 
@@ -67,7 +66,7 @@ int main() {
   is_finished = true; // still relied on by the detached workers
 
   rlImGuiShutdown();
-  ImPlot::DestroyContext(); // replace implot
+  ImPlot::DestroyContext(); 
   CloseWindow();
 
   return 0;
