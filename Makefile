@@ -7,7 +7,7 @@ TARGET := $(BUILD_DIR)/punktop
 CXXFLAGS := -Wall -Wextra \
             -Iinclude \
             -Iextras \
-            -Isrc/Imgui \
+            -Isrc/imgui \
             -Isrc/implot
 
 LDLIBS := -Lsrc -lraylib \
