@@ -1,4 +1,4 @@
-#include "../punktop.h"
+#include "punktop.h"
 #include <algorithm>
 #include <cstdlib>
 #include <cstring>

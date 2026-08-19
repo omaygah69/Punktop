@@ -1,4 +1,4 @@
-#include "../punktop.h"
+#include "punktop.h"
 #include "imgui.h"
 #include <chrono>
 #define PATH "/proc/stat"

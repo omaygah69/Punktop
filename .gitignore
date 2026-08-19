@@ -1,5 +1,6 @@
 build/
 src/imgui.ini
-/imgui.ini
+imgui.ini
 .cache
 /*.json
+/*.org

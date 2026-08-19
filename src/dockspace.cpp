@@ -1,4 +1,4 @@
-#include "../punktop.h"
+#include "punktop.h"
 
 void ShowDockSpace(bool& p_open){
     static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthruCentralNode;
@@ -66,7 +66,7 @@ void ShowDockSpace(bool& p_open){
     ImGui::End();
 
     {
-        ImGui::Begin("SpaceY Inc.");
+        ImGui::Begin("Plot");
         ImGui::Text("Hello from basementq!");
         // control refresh speed
         ImGui::SliderFloat("Reading Interval (sec)", reinterpret_cast<float*>(&read_speed),
@@ -96,7 +96,7 @@ void ShowDockSpace(bool& p_open){
     }
 
     {
-        ImGui::Begin("Sizif-9 Rocket Telemetry");
+        ImGui::Begin("System Info");
         ImGui::Text("Tonight We steal the moon!");
         ImVec2 region = ImGui::GetContentRegionAvail();
         float child_width = region.x * 0.6f;  // % of parent width

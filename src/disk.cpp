@@ -1,5 +1,5 @@
 #include "implot.h"
-#include "../punktop.h"
+#include "punktop.h"
 #include <atomic>
 #include <chrono>
 #include <mutex>

@@ -1,13 +1,33 @@
-CC = clang++ 
-SRC = src/libraylib.a src/Imgui/*.cpp src/*.cpp src/implot/*.cpp
-OUT = raytest
-LIBS = -lX11 -lXrandr -lXi -lXcursor -lXinerama -lGL -lm -ldl -lpthread
-INCLUDE = -Isrc/include -Isrc/extras -Isrc/Imgui -Isrc/implot 
+CXX := clang++
+
+SRC_DIR := src
+BUILD_DIR := build
+TARGET := $(BUILD_DIR)/punktop
+
+CXXFLAGS := -Wall -Wextra \
+            -Iinclude \
+            -Iextras \
+            -Isrc/Imgui \
+            -Isrc/implot
+
+LDLIBS := -Lsrc -lraylib \
+          -lX11 -lXrandr -lXi -lXcursor -lXinerama \
+          -lGL -lm -ldl -lpthread
+
+SOURCES := $(shell find $(SRC_DIR) -name '*.cpp')
+OBJECTS := $(SOURCES:$(SRC_DIR)/%.cpp=$(BUILD_DIR)/%.o)
 
 .PHONY: all clean
 
-all:
-	$(CC) $(SRC) $(INCLUDE) -o $(OUT) $(LIBS)
+all: $(TARGET)
+
+$(TARGET): $(OBJECTS)
+	@mkdir -p $(@D)
+	$(CXX) $^ $(LDLIBS) -o $@
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
+	@mkdir -p $(@D)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OUT)
+	rm -rf $(BUILD_DIR)

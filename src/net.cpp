@@ -1,4 +1,4 @@
-#include "../punktop.h"
+#include "punktop.h"
 #include "implot.h"
 #include <fstream>
 #include <sstream>

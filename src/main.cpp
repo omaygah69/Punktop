@@ -4,7 +4,7 @@
 #include "rlImGui.h"
 #include "implot.h" 
 #include "implot_internal.h" 
-#include "../punktop.h"
+#include "punktop.h"
 #include "api.h"
 #include <iostream>
 #include <stdio.h>
