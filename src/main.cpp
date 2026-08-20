@@ -21,7 +21,7 @@ int main() {
   disk_worker.detach();
   std::thread cpu_plot_worker(FetchCpuUsageForPlot);
   cpu_plot_worker.detach();
-  std::thread p(WriteSystemJson);
+  std::thread system_json_worker(WriteSystemJson);
 
   // FLAGS: FLAG_WINDOW_HIGHDPI |
   SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
@@ -64,6 +64,8 @@ int main() {
   }
 
   is_finished = true; // still relied on by the detached workers
+  system_json_worker.join(); // WriteSystemJson loops while(!is_finished)
+
 
   rlImGuiShutdown();
   ImPlot::DestroyContext(); 

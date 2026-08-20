@@ -1,4 +1,5 @@
 #include "system.h"
+#include "punktop.h"
 #include "json.hpp"
 #include <thread>
 #include <fstream>
@@ -8,7 +9,7 @@ using json = nlohmann::json;
 void WriteSystemJson() {
     using namespace std::literals::chrono_literals;
 
-    while (true) {
+    while (!is_finished) {
         json root;
 
         // system
