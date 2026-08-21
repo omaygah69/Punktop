@@ -17,7 +17,7 @@
 
 extern std::atomic<bool> is_finished;
 extern std::string search_query;
-extern std::atomic<float> read_speed;
+// extern std::atomic<float> read_speed;
 
 // extern bool fetch_finished;
 // extern std::mutex mtx;

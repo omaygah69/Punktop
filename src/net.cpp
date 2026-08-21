@@ -8,7 +8,7 @@ static std::atomic<bool> net_is_finished{false};
 static const size_t HISTORY_SIZE = 120; // ~2 minutes at 1s interval
 static NetHistory net_history;
 static std::mutex net_mutex;
-extern std::atomic<float> read_speed{1.0f};
+std::atomic<float> read_speed{1.0f};
 
 NetStat ReadNetStat(const std::string& iface) {
     NetStat stat;
