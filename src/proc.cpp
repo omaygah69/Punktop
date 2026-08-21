@@ -513,9 +513,9 @@ void ShowProcessNode(int idx) {
 
     // subtle color by depth in tree (for hierarchy clarity)
     int depth = 0;
-    for (int parent = std::stoi(proc.ParentId);
-         parent != 0 && parent < (int)Procs.size(); ) {
-        parent = std::stoi(Procs[parent].ParentId);
+    std::string ppid = proc.ParentId;
+    while (ppid != "0" && pidToIndex.count(ppid)) {
+        ppid = Procs[pidToIndex[ppid]].ParentId;
         depth++;
     }
     float intensity = std::max(0.2f, 1.0f - depth * 0.1f);
