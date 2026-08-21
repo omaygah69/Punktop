@@ -11,15 +11,21 @@
 #include <unordered_map>
 #include <unordered_set>
 
+typedef struct {
+  long ticks;
+  double timestamp;
+} CpuSample;
+
 namespace fs = std::filesystem;
 static const fs::path dir_path = "/proc/";
 static std::vector<Process> Procs;
 static std::mutex mtx;
 static std::string selected_pid;
-static int current_match_index;
 SortMode sortMode = no_sort;
 std::string search_query;
 static std::unordered_set<std::string> pinned_pids;
+std::unordered_map<std::string, int> pidToIndex;
+static std::unordered_map<std::string, CpuSample> prev_samples;
 
 void ShowProcessesV() {
     ImGui::BeginChild("ProcScroll", ImVec2(0, 400), true);
@@ -139,6 +145,7 @@ void ShowProcessesV() {
 
 void FetchProcesses() {
     Procs.clear();
+    pidToIndex.clear();
     try {
         if (fs::exists(dir_path) && fs::is_directory(dir_path)) {
             for (const auto &entry : fs::directory_iterator(dir_path)) {
@@ -159,6 +166,16 @@ void FetchProcesses() {
                         proc.CpuUsage = GetProcCpuUsage(entry_pid);
                         proc.ThreadCount = GetProcThreadCount(entryp_path);
 
+			long utime = 0, stime = 0;
+			char path[64];
+			snprintf(path, sizeof(path), "%s/stat", entryp_path);
+			FILE* pf = fopen(path, "r");
+			if(pf){
+			  fscanf(pf, "%*d %*s %*c %*d %*d %*d %*d %*d %*u %*u %*u %*u %lu %lu", &utime, &stime);
+			  fclose(pf);
+			  prev_samples[entry_pid] = { utime + stime, ImGui::GetTime() };
+			}
+
                         Procs.push_back(proc);
                         // if(name)
                         //     free(name);
@@ -167,7 +184,6 @@ void FetchProcesses() {
             }
 
             //  build parent-child relationships 
-            std::unordered_map<std::string, int> pidToIndex;
             for (int i = 0; i < (int)Procs.size(); i++) {
                 pidToIndex[Procs[i].Pid] = i;
                 Procs[i].Children.clear(); // reset before rebuilding
@@ -178,6 +194,10 @@ void FetchProcesses() {
                 if (pidToIndex.count(proc.ParentId)) {
                     Procs[pidToIndex[proc.ParentId]].Children.push_back(i);
                 }
+            }
+
+            for (auto it = prev_samples.begin(); it != prev_samples.end(); ) {
+                it = pidToIndex.count(it->first) ? std::next(it) : prev_samples.erase(it);
             }
 
             if (sortMode != no_sort)
@@ -344,42 +364,26 @@ float GetProcCpuUsage(const std::string &pid) {
     FILE *pf = fopen(stat_file, "r");
     if (!pf)
         return 0.0f;
-    long utime, stime;
+    long utime = 0, stime = 0;
+    fscanf(pf, "%*d %*s %*c %*d %*d %*d %*d %*d %*u %*u %*u %*u %lu %lu", &utime, &stime);
+    fclose(pf);
+
+    long current_ticks = utime + stime;
     long clk_tck = sysconf(_SC_CLK_TCK);
 
-    // Extract needed fields from /proc/[pid]/stat file
-    // Format: pid (comm) state ppid ... utime stime ... starttime ...
-    char comm[256], state;
-    int ppid, pgrp, session, tty_nr, tpgid;
-    unsigned flags;
-    unsigned long cutime, cstime, priority, nice, num_threads, itrealvalue;
-    unsigned long long start_time_ticks;
-    unsigned long vsize;
-    long rss_val;
-    int f = fscanf(pf,
-                   "%*d %*s %*c "
-                   "%*d %*d %*d %*d %*d "
-                   "%*u %*u %*u %*u %lu %lu "
-                   "%*d %*d %*d %*d %*d %*d "
-                   "%llu",
-                   &utime, &stime, &start_time_ticks);
-    fclose(pf);
-    long total_time = utime + stime;
-
-    // System uptime
-    float uptime_secs = 0;
-    pf = fopen("/proc/uptime", "r");
-    if (!pf)
-        return 0.0f;
-    fscanf(pf, "%f", &uptime_secs);
-    fclose(pf);
-
-    // Seconds the process has been running
-    float seconds = uptime_secs - (start_time_ticks / (float)clk_tck);
-    if (seconds <= 0)
-        return 0.0f;
-    float cpu_usage = 100.0f * ((total_time / (float)clk_tck) / seconds);
-    return cpu_usage;
+    auto it = prev_samples.find(pid);
+    if (it != prev_samples.end()) {
+        long prev_ticks = it->second.ticks;
+        double prev_time = it->second.timestamp;
+        double now = ImGui::GetTime();
+        double elapsed = now - prev_time;
+        if (elapsed > 0.1 && current_ticks > prev_ticks) {
+            float cpu_usage = 100.0f * ((current_ticks - prev_ticks) / (float)clk_tck) / (float)elapsed;
+            if (cpu_usage > 100.0f) cpu_usage = 100.0f;
+            return cpu_usage;
+        }
+    }
+    return 0.0f;
 }
 
 std::string GetProcPpid(const char* path) {
