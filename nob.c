@@ -81,6 +81,7 @@ int main(int argc, char **argv)
 
     if (argc > 1 && strcmp(argv[1], "clean") == 0) {
         nob_delete_file(TARGET);
+        nob_delete_file("system.json");
         return 0;
     }
 
