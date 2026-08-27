@@ -72,7 +72,8 @@ std::vector<float> CalculateCpuUsage(const std::vector<Core_t> &prev,
     size_t curr_idle = IdleTime(&curr[i]);
     float total_diff = static_cast<float>(curr_total - prev_total);
     float idle_diff = static_cast<float>(curr_idle - prev_idle);
-    float cpu_usage = 100.0f * (total_diff - idle_diff) / total_diff;
+    float cpu_usage = (total_diff > 0)
+      ? 100.0f * (total_diff - idle_diff) / total_diff : 0.0f;
     entries.push_back(cpu_usage);
   }
 
