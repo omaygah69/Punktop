@@ -10,7 +10,7 @@ CXXFLAGS := -Wall -Wextra \
             -Isrc/imgui \
             -Isrc/implot
 
-LDLIBS := -Lsrc -lraylib \
+LDLIBS := -Llib -lraylib \
           -lX11 -lXrandr -lXi -lXcursor -lXinerama \
           -lGL -lm -ldl -lpthread
 

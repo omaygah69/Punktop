@@ -14,7 +14,7 @@ static const char *cxxflags[] = {
 };
 
 static const char *ldlibs[] = {
-    "-Lsrc",
+    "-Llib",
     "-lraylib",
     "-lX11",
     "-lXrandr",
